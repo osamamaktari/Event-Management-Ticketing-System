@@ -1,6 +1,12 @@
 @import './base.css';
 @import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@custom-variant dark (&:where(.dark, .dark *));
+
+
+.body {
+  font-family: "Work Sans", sans-serif;
+  font-optical-sizing: auto;
+  font: weight 700px;;
+  font: style 500px;;
+}
