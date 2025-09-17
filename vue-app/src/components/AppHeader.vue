@@ -16,14 +16,15 @@ defineProps({
 <template>
  
   
-  <header class="bg-indigo-600 dark:bg-gray-800 text-white p-4 flex justify-between items-center shadow-md">
+  <header class="h-20 bg-blue-900 dark:bg-gray-800 text-white p-4 flex justify-between items-center shadow-md">
    
     <div class="flex items-center gap-4">
       <button class="md:hidden text-white" @click="$emit('toggleSidebar')">
   
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 12h16"></path></svg>
       </button>
-      <h1 class="text-lg font-bold">{{ title }}</h1>
+        <TicketIcon class="w-8 h-8" />
+        <h1 class="text-2xl font-bold">Eventify</h1>
     </div>
 
 
@@ -42,6 +43,11 @@ defineProps({
 </template>
 
 <script setup>
+import { 
+ 
+  TicketIcon, 
+
+} from '@heroicons/vue/24/outline';
 
 defineProps({
   title: { 

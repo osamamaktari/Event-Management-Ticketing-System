@@ -7,7 +7,7 @@
     <div class="flex-1 flex flex-col">
   
       <AppHeader 
-        :title="pageTitle" 
+    
         :is-dark="isDark"
         @toggleSidebar="sidebarOpen = !sidebarOpen"
         @toggle-dark-mode="toggleDark" 
