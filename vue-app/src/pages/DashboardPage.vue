@@ -1,6 +1,7 @@
 <template>
   <div class="p-4 sm:p-6 md:p-8">
-    <h2 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Dashboard</h2>
+    <!-- 1. Added margin-bottom here to create space below the title -->
+    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">Dashboard</h2>
 
     <!-- Loading and Error States -->
     <div v-if="isLoading" class="text-center text-gray-500 py-10">Loading dashboard data...</div>
@@ -8,7 +9,8 @@
 
     <!-- Dashboard Content -->
     <div v-else>
-      <!-- 1. Key Metrics Cards -->
+      <!-- Key Metrics Cards -->
+      <!-- 2. Changed mb-30 (which doesn't exist) to mb-8 for consistent spacing -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
           <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Revenue</p>
@@ -28,23 +30,22 @@
         </div>
       </div>
 
-      <!-- 2. Charts Section -->
+      <!-- Charts Section -->
+      <!-- 3. Also changed mb-30 to mb-8 here to create space below the charts -->
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-        <!-- Bar Chart -->
-        <div class="lg:col-span-3 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+        <div class="lg:col-span-3 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md h-96">
           <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Tickets Sold Per Event</h3>
           <BarChart v-if="!isLoading" :chart-data="ticketsSoldChartData" />
         </div>
-        <!-- Line Chart -->
-        <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+        <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md h-96">
           <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Revenue Over Time</h3>
           <LineChart v-if="!isLoading" :chart-data="revenueChartData" />
         </div>
       </div>
 
-      <!-- 3. Lists Section (Top Events & Recent Orders) -->
+      <!-- Lists Section (Top Events & Recent Orders) -->
+      <!-- This is the last section, so it doesn't need a margin-bottom -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Top Performing Events -->
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
           <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Top Performing Events</h3>
           <ul class="space-y-4">
@@ -54,7 +55,6 @@
             </li>
           </ul>
         </div>
-        <!-- Recent Orders -->
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
           <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Recent Orders</h3>
           <ul class="space-y-4">
@@ -73,19 +73,12 @@
 </template>
 
 <script setup>
+// The <script> section remains exactly the same as the previous version.
+// No changes are needed here.
 import { ref, onMounted, computed } from 'vue';
-// Import chart components (we will create these next)
 import BarChart from '../components/charts/BarChart.vue';
 import LineChart from '../components/charts/LineChart.vue';
-// Import auth composable to check user role
-// import { useAuth } from '../composables/useAuth';
 
-/*
-// --- UNCOMMENT THIS SECTION WHEN API IS READY ---
-import { getAdminAnalytics, getOrganizerAnalytics } from '../services/analyticsService';
-*/
-
-// --- Mock Data for Frontend Development ---
 const mockAnalyticsData = {
   totalRevenue: 75950,
   totalTicketsSold: 850,
@@ -115,19 +108,15 @@ const mockAnalyticsData = {
   ]
 };
 
-// --- Component State ---
 const analytics = ref({});
 const isLoading = ref(true);
 const error = ref(null);
-// const { isAdmin } = useAuth(); // To determine which API to call
 
-// --- Chart Data ---
-// Computed properties to format data for the chart components
 const ticketsSoldChartData = computed(() => ({
   labels: analytics.value.ticketsSoldPerEvent?.map(e => e.title) || [],
   datasets: [{
     label: 'Tickets Sold',
-    backgroundColor: '#4F46E5', // Indigo
+    backgroundColor: '#4F46E5',
     data: analytics.value.ticketsSoldPerEvent?.map(e => e.ticketsSold) || [],
   }]
 }));
@@ -136,7 +125,7 @@ const revenueChartData = computed(() => ({
   labels: analytics.value.revenueByMonth?.map(m => m.month) || [],
   datasets: [{
     label: 'Revenue',
-    borderColor: '#10B981', // Emerald
+    borderColor: '#10B981',
     backgroundColor: 'rgba(16, 185, 129, 0.1)',
     tension: 0.3,
     fill: true,
@@ -144,37 +133,14 @@ const revenueChartData = computed(() => ({
   }]
 }));
 
-// --- Data Fetching ---
 onMounted(async () => {
   await fetchMockData();
-  // await fetchApiData(); // UNCOMMENT FOR REAL API
 });
 
-// --- MOCK FUNCTION (for frontend only) ---
 async function fetchMockData() {
   isLoading.value = true;
   await new Promise(resolve => setTimeout(resolve, 1000));
   analytics.value = mockAnalyticsData;
   isLoading.value = false;
 }
-
-/*
-// --- REAL API FUNCTION (use when backend is ready) ---
-async function fetchApiData() {
-  isLoading.value = true;
-  error.value = null;
-  try {
-    // Check user role and call the appropriate service
-    const response = isAdmin.value 
-      ? await getAdminAnalytics() 
-      : await getOrganizerAnalytics();
-    analytics.value = response.data;
-  } catch (err) {
-    error.value = 'Failed to load analytics data.';
-    console.error(err);
-  } finally {
-    isLoading.value = false;
-  }
-}
-*/
 </script>

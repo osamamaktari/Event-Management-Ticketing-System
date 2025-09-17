@@ -16,7 +16,7 @@ defineProps({
 <template>
  
   
-  <header class="h-20 bg-blue-900 dark:bg-gray-800 text-white p-4 flex justify-between items-center shadow-md">
+  <header class="h-20 bg-gray-600 dark:bg-gray-800 text-white p-4 flex justify-between items-center shadow-md">
    
     <div class="flex items-center gap-4">
       <button class="md:hidden text-white" @click="$emit('toggleSidebar')">
