@@ -13,31 +13,37 @@ export function useAuth() {
   const isAttendee = () => user.value?.role === 'attendee';
 
   async function csrf() {
-    // get sanctum cookie (credentials included)
-    await fetch(`${BASE_URL}/sanctum/csrf-cookie`, { credentials: 'include' });
+    await api.get(`${BASE_URL}/sanctum/csrf-cookie`, { withCredentials: true });
+  }
+
+  async function fetchUser() {
+    try {
+      const res = await api.get('/user');
+      user.value = res.data;
+      localStorage.setItem('user', JSON.stringify(res.data));
+    } catch (err) {
+      console.error('Error fetching user:', err);
+      logout();
+    }
   }
 
   async function login(email, password) {
     await csrf();
     const res = await api.post('/login', { email, password });
-    const u = res.data.user || res.data;
-    user.value = u;
-    token.value = res.data.token || null;
-    if (token.value) setAuthToken(token.value);
-    localStorage.setItem('user', JSON.stringify(u));
-    if (token.value) localStorage.setItem('token', token.value);
+    token.value = res.data.token;
+    setAuthToken(token.value);
+    localStorage.setItem('token', token.value);
+    await fetchUser();
     return res;
   }
 
   async function register(payload) {
     await csrf();
     const res = await api.post('/register', payload);
-    const u = res.data.user || res.data;
-    user.value = u;
-    token.value = res.data.token || null;
-    if (token.value) setAuthToken(token.value);
-    localStorage.setItem('user', JSON.stringify(u));
-    if (token.value) localStorage.setItem('token', token.value);
+    token.value = res.data.token;
+    setAuthToken(token.value);
+    localStorage.setItem('token', token.value);
+    await fetchUser();
     return res;
   }
 
