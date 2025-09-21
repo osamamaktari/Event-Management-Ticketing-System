@@ -8,7 +8,7 @@
             <h3 class="text-lg font-bold text-gray-900 dark:text-white">Scan Ticket QR Code</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">{{ ticketInfo }}</p>
             
-            <!-- The QR code is rendered here inside a white container for better scanning -->
+            <!-- The QR code is rendered dynamically using the short text -->
             <div class="bg-white p-4 inline-block rounded-lg border dark:border-gray-700">
               <qrcode-vue 
                 :value="qrCodeValue" 
@@ -33,25 +33,21 @@
 </template>
 
 <script setup>
-// 1. Import the installed library
 import QrcodeVue from 'qrcode.vue';
 
-// 2. Define the component's props and emits
 defineProps({
   isOpen: { type: Boolean, default: false },
-  qrCodeValue: { type: String, required: true }, // The string to be converted to a QR code
-  ticketInfo: { type: String, default: '' },    // Optional info like "Event Name - VIP"
+  qrCodeValue: { type: String, required: true }, // Short text or URL from DB
+  ticketInfo: { type: String, default: '' },
 });
 
 defineEmits(['close']);
 </script>
 
 <style scoped>
-/* Simple fade transition for the modal background */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
-/* Pop-in transition for the modal content */
 .pop-enter-active { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
 .pop-leave-active { transition: all 0.2s ease-in-out; }
 .pop-enter-from, .pop-leave-to { transform: scale(0.95); opacity: 0; }

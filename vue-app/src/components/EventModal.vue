@@ -59,11 +59,16 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+// 1. Import the notifications composable
+import { useNotifications } from '../composables/useNotifications.js';
+
+// 2. Initialize the composable
+const { showInfo } = useNotifications( );
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
   event: { type: Object, required: true }
-} );
+});
 
 const emit = defineEmits(['close', 'create-order']);
 
@@ -94,6 +99,11 @@ function updateQuantity(ticketTypeId, change) {
   // Ensure quantity is within valid range [0, available]
   if (newQuantity >= 0 && newQuantity <= available) {
     quantities.value[ticketTypeId] = newQuantity;
+
+    // 3. Show an info toast when a ticket is added or removed
+    if (change > 0) {
+      showInfo(`Added 1 "${ticketType.name}" ticket.`);
+    }
   }
 }
 
@@ -109,6 +119,7 @@ function submitOrder() {
   if (items.length > 0) {
     emit('create-order', { items });
   }
+  
 }
 
 function close() {

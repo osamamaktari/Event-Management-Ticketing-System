@@ -62,7 +62,8 @@ const form = ref({});
 const bannerFile = ref(null);
 const previewUrl = ref(null);
 
-const isEditing = computed(() => !!props.event);
+
+const isEditing = computed(() => !!props.event?.id);
 
 // Watch for the event prop to populate the form for editing
 watch(() => props.event, (newEvent) => {
@@ -105,7 +106,7 @@ function submitForm() {
   }
   // For PUT requests, Laravel needs this to correctly handle FormData
   if (isEditing.value) {
-    formData.append('_method', 'PUT');
+    formData.append('_method', 'POST');
   }
   
   emit('save', formData);

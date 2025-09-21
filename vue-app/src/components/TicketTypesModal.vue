@@ -1,5 +1,5 @@
 <template>
-  <!-- 1. المودال الرئيسي لأنواع التذاكر -->
+  <!-- Main Modal for managing ticket types -->
   <transition name="fade">
     <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70" @click.self="close">
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg max-w-2xl w-full m-4 max-h-[90vh] flex flex-col">
@@ -45,7 +45,7 @@
     </div>
   </transition>
 
-  <!-- 2. مودال تأكيد الحذف (مستقل وفي نفس المستوى) -->
+  <!-- Deletion Confirmation Modal -->
   <ConfirmationModal
     :isOpen="isConfirmOpen"
     type="confirm"
@@ -54,23 +54,15 @@
     @confirm="deleteTicketType"
     @cancel="isConfirmOpen = false"
   />
-  
-  <!-- 3. مودال الإشعار (مستقل وفي نفس المستوى) -->
-  <ConfirmationModal
-    :isOpen="isNotifyOpen"
-    :type="notifyType"
-    :title="notifyTitle"
-    :message="notifyMessage"
-    confirmText="OK"
-    :showCancel="false"
-    @confirm="isNotifyOpen = false"
-  />
 </template>
 
 <script setup>
 import { ref } from 'vue';
-// هذا المسار صحيح بناءً على أن الملفات في نفس المجلد
 import ConfirmationModal from './ConfirmationModal.vue';
+import { useNotifications } from '../composables/useNotifications.js';
+import { addTicketType as apiAddTicketType, deleteTicketType as apiDeleteTicketType } from '../services/eventsService.js';
+
+const { showSuccess, showError } = useNotifications();
 
 const props = defineProps({
   isOpen: Boolean,
@@ -80,40 +72,49 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const newType = ref({ name: '', price: null, quantity: null });
-
-// --- State for our modals ---
 const isConfirmOpen = ref(false);
 const typeToDelete = ref(null);
-const isNotifyOpen = ref(false);
-const notifyType = ref('success');
-const notifyTitle = ref('');
-const notifyMessage = ref('');
 
-function addTicketType() {
-  console.log('Adding ticket type:', { eventId: props.event.id, ...newType.value });
-  
-  notifyType.value = 'success';
-  notifyTitle.value = 'Type Added';
-  notifyMessage.value = `(Simulation) The ticket type "${newType.value.name}" has been added.`;
-  isNotifyOpen.value = true;
+// Add a new ticket type via API
+async function addTicketType() {
+  if (!newType.value.name || newType.value.price === null || newType.value.quantity === null) {
+    showError('Please fill all fields.');
+    return;
+  }
 
-  newType.value = { name: '', price: null, quantity: null };
+  try {
+    const res = await apiAddTicketType(props.event.id, newType.value);
+    // Push the new type to event.ticket_types array
+    if (!props.event.ticket_types) props.event.ticket_types = [];
+    props.event.ticket_types.push(res.data);
+    showSuccess(`Ticket type "${res.data.name}" added successfully.`);
+    newType.value = { name: '', price: null, quantity: null };
+  } catch (err) {
+    console.error(err);
+    showError(err.response?.data?.message || 'Failed to add ticket type.');
+  }
 }
 
+// Confirm deletion modal
 function confirmDelete(ticketType) {
   typeToDelete.value = ticketType;
   isConfirmOpen.value = true;
 }
 
-function deleteTicketType() {
-  console.log('Deleting ticket type:', typeToDelete.value.id);
-  isConfirmOpen.value = false;
+// Delete ticket type via API
+async function deleteTicketType() {
+  if (!typeToDelete.value) return;
 
-  notifyType.value = 'success';
-  notifyTitle.value = 'Type Deleted';
-  notifyMessage.value = `(Simulation) The ticket type "${typeToDelete.value.name}" has been deleted.`;
-  isNotifyOpen.value = true;
-  typeToDelete.value = null;
+  try {
+    await apiDeleteTicketType(typeToDelete.value.id);
+    props.event.ticket_types = props.event.ticket_types.filter(tt => tt.id !== typeToDelete.value.id);
+    showSuccess(`Ticket type "${typeToDelete.value.name}" deleted successfully.`);
+    typeToDelete.value = null;
+    isConfirmOpen.value = false;
+  } catch (err) {
+    console.error(err);
+    showError(err.response?.data?.message || 'Failed to delete ticket type.');
+  }
 }
 
 function close() {
