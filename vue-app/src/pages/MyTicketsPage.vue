@@ -15,12 +15,10 @@
 
     <!-- Tickets List -->
     <div v-else-if="tickets.length" class="space-y-4">
-      <!-- We are integrating the logic from TicketDownload.vue directly here -->
       <div v-for="ticket in tickets" :key="ticket.id" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         
         <!-- Ticket Information -->
         <div class="flex-grow">
-          <!-- Accessing nested data as per the requirements -->
           <h3 class="font-bold text-lg text-indigo-600 dark:text-indigo-400">{{ ticket.ticket_type.event.title }}</h3>
           <p class="text-gray-800 dark:text-gray-200 mt-1">
             <strong>Ticket:</strong> {{ ticket.ticket_type.name }}
@@ -52,112 +50,59 @@
       <p>Go to the events page to make a purchase.</p>
     </div>
 
-    <!-- QR Code Modal (reusing the component) -->
+    <!-- QR Code Modal -->
     <QrCodeModal 
       v-if="isQrModalOpen"
       :isOpen="isQrModalOpen"
-      :qrCodeValue="selectedTicket.qr_code"
+      :qrCodeValue="selectedTicket.qr_code" 
       :ticketInfo="`${selectedTicket.ticket_type.event.title} - ${selectedTicket.ticket_type.name}`"
       @close="isQrModalOpen = false"
     />
-
-     <ConfirmationModal
-      :isOpen="isConfirmModalOpen"
-      :type="confirmModalType"
-      :title="confirmModalTitle"
-      :message="confirmModalMessage"
-      confirmText="Close"
-      :showCancel="false" 
-      @confirm="isConfirmModalOpen = false"
-      @cancel="isConfirmModalOpen = false"
-    />
-
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-// We don't need TicketDownload.vue anymore
-// import TicketDownload from '../components/TicketDownload.vue'; 
 import QrCodeModal from '../components/QrCodeModal.vue';
-import ConfirmationModal from '../components/ConfirmationModal.vue';
-const isConfirmModalOpen = ref(false);
-const confirmModalType = ref('error');
-const confirmModalTitle = ref('');
-const confirmModalMessage = ref('');
-// --- Mock Data for Frontend Development ---
-// This data structure matches the API requirements
-const mockTickets = [
-  { 
-    id: 1, 
-    qr_code: 'MOCK_QR_CODE_12345', 
-    status: 'active',
-    ticket_type: {
-      name: 'VIP',
-      event: {
-        title: 'Epic Music Concert',
-        start_date: '2025-10-01T19:00:00',
-      }
-    }
-  },
-  { 
-    id: 2, 
-    qr_code: 'MOCK_QR_CODE_67890', 
-    status: 'used',
-    ticket_type: {
-      name: 'All-Access Pass',
-      event: {
-        title: 'Future of Tech Conference',
-        start_date: '2025-11-05T09:00:00',
-      }
-    }
-  },
-];
+import { useAuth } from '../composables/useAuth';
+import { useNotifications } from '../composables/useNotifications';
+import { getUserTickets, downloadTicket } from '../services/ticketsService.js';
+
+// --- Composables ---
+const { isLogged } = useAuth();
+const { showSuccess, showError } = useNotifications();
 
 // --- Component State ---
 const tickets = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
-const isDownloading = ref(null); // Use ticket ID to track which one is downloading
+const isDownloading = ref(null);
 
 // --- Modal State ---
 const isQrModalOpen = ref(false);
 const selectedTicket = ref(null);
 
-// --- Data Fetching ---
-onMounted(async () => {
-  // To work with the backend, replace the mock function with the real API call.
-  await fetchMockData();
-  // await fetchApiData(); // UNCOMMENT THIS LINE TO USE THE REAL API
-});
+// --- Fetch Tickets from API ---
+async function fetchTickets() {
+  if (!isLogged()) {
+    error.value = 'Please log in to view your tickets.';
+    isLoading.value = false;
+    return;
+  }
 
-// --- MOCK FUNCTION (for frontend only) ---
-async function fetchMockData() {
   isLoading.value = true;
   error.value = null;
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  tickets.value = mockTickets;
-  isLoading.value = false;
-}
 
-/*
-// --- REAL API FUNCTION (use when backend is ready) ---
-import { getUserTickets, downloadTicket } from '../services/ticketsService';
-
-async function fetchApiData() {
-  isLoading.value = true;
-  error.value = null;
   try {
-    const response = await getUserTickets();
-    tickets.value = response.data;
+    const res = await getUserTickets();
+    tickets.value = res.data || [];
   } catch (err) {
-    error.value = 'Failed to load your tickets.';
     console.error(err);
+    error.value = err.response?.data?.message || 'Failed to load your tickets.';
   } finally {
     isLoading.value = false;
   }
 }
-*/
 
 // --- Methods ---
 function showQrCode(ticket) {
@@ -166,45 +111,27 @@ function showQrCode(ticket) {
 }
 
 // --- PDF Download Logic ---
-function handleDownloadPdf(ticket) {
+async function handleDownloadPdf(ticket) {
   isDownloading.value = ticket.id;
-    // ---   (Frontend Only) ---
-  console.log(`Simulating PDF download for ticket: "${ticket.ticket_type.event.title}".`);
-  
-  //failed senario
-  setTimeout(() => {
-    showErrorModal('Download Failed', 'Could not connect to the server to download the ticket. Please try again later.');
-    isDownloading.value = null;
-  }, 2000);
 
-  /* success
-  setTimeout(() => {
-    console.log('Download successful simulation.');
-    isDownloading.value = null;
-  }, 2000);
-  */
-
-  /*
-  // --- REAL PDF DOWNLOAD LOGIC (use when backend is ready) ---
   try {
-    const response = await downloadTicket(ticket.id);
-    // ... a lot of code to create and click a link ...
+    const res = await downloadTicket(ticket.id);
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${ticket.ticket_type.event.title}-ticket.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showSuccess('Your ticket PDF download has started.');
   } catch (err) {
     console.error(err);
-    // alert()
-    showErrorModal('Download Failed', err.response?.data?.message || 'An unknown error occurred.');
+    showError('Could not download the ticket. Please try again later.');
   } finally {
     isDownloading.value = null;
   }
-  */
 }
-function showErrorModal(title, message) {
-  confirmModalType.value = 'error';
-  confirmModalTitle.value = title;
-  confirmModalMessage.value = message;
-  isConfirmModalOpen.value = true;
-}
-
 
 // --- Helper Functions ---
 function statusClass(status) {
@@ -215,4 +142,9 @@ function statusClass(status) {
   };
   return styles[status] || 'text-gray-500';
 }
+
+// --- Lifecycle ---
+onMounted(() => {
+  fetchTickets();
+});
 </script>

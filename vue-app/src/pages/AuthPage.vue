@@ -34,13 +34,16 @@
           <form @submit.prevent="handleLogin" class="space-y-6">
             <div>
               <label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-              <input type="email" v-model="loginForm.email" id="login-email" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
+              <input type="email" v-model="loginForm.email" id="login-email" required
+                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
             </div>
             <div>
               <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-              <input type="password" v-model="loginForm.password" id="login-password" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
+              <input type="password" v-model="loginForm.password" id="login-password" required
+                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
             </div>
-            <button type="submit" :disabled="isLoading" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-indigo-400">
+            <button type="submit" :disabled="isLoading"
+                    class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-indigo-400">
               {{ isLoading ? 'Logging in...' : 'Login' }}
             </button>
           </form>
@@ -52,25 +55,30 @@
           <form @submit.prevent="handleRegister" class="space-y-6">
             <div>
               <label for="register-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
-              <input type="text" v-model="registerForm.name" id="register-name" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
+              <input type="text" v-model="registerForm.name" id="register-name" required
+                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
             </div>
             <div>
               <label for="register-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-              <input type="email" v-model="registerForm.email" id="register-email" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
+              <input type="email" v-model="registerForm.email" id="register-email" required
+                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
             </div>
             <div>
               <label for="register-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-              <input type="password" v-model="registerForm.password" id="register-password" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
+              <input type="password" v-model="registerForm.password" id="register-password" required
+                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
             </div>
             <!-- Role Selection -->
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">I am an</label>
-              <select v-model="registerForm.role" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
+              <select v-model="registerForm.role"
+                      class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
                 <option value="attendee">Attendee (I want to buy tickets)</option>
                 <option value="organizer">Organizer (I want to create events)</option>
               </select>
             </div>
-            <button type="submit" :disabled="isLoading" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-indigo-400">
+            <button type="submit" :disabled="isLoading"
+                    class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-indigo-400">
               {{ isLoading ? 'Creating Account...' : 'Register' }}
             </button>
           </form>
@@ -94,7 +102,7 @@ const router = useRouter();
 const { login, register } = useAuth();
 
 // --- Component State ---
-const activeTab = ref('login'); // Can be 'login' or 'register'
+const activeTab = ref('login'); // 'login' or 'register'
 const isLoading = ref(false);
 const error = ref(null);
 
@@ -116,14 +124,9 @@ async function handleLogin() {
   isLoading.value = true;
   error.value = null;
   try {
-    // Call the login function from the useAuth composable
     await login(loginForm.value.email, loginForm.value.password);
-    
-    // Redirect to the home page or dashboard after successful login
-    router.push('/'); 
-    
+    router.push('/'); // Redirect after login
   } catch (err) {
-    // Display error message from the API response or a generic one
     error.value = err.response?.data?.message || 'Login failed. Please check your credentials.';
   } finally {
     isLoading.value = false;
@@ -134,12 +137,8 @@ async function handleRegister() {
   isLoading.value = true;
   error.value = null;
   try {
-    // Call the register function from the useAuth composable
     await register(registerForm.value);
-
-    // Redirect to the home page or dashboard after successful registration
-    router.push('/');
-
+    router.push('/'); // Redirect after registration
   } catch (err) {
     error.value = err.response?.data?.message || 'Registration failed. Please try again.';
   } finally {

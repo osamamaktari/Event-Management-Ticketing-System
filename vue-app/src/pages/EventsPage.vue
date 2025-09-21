@@ -38,7 +38,8 @@
       @create-order="prepareCreateOrder"
     />
 
- <ConfirmationModal
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
       :isOpen="isConfirmModalOpen"
       :type="confirmModalType"
       :title="confirmModalTitle"
@@ -48,8 +49,6 @@
       @confirm="executeOrder"
       @cancel="cancelOrder"
     />
-
-
   </div>
 </template>
 
@@ -58,74 +57,14 @@ import { ref, onMounted } from 'vue';
 import EventCard from '../components/EventCard.vue';
 import EventModal from '../components/EventModal.vue';
 import ConfirmationModal from '@/components/ConfirmationModal.vue';
-// --- Import your API services here when ready ---
-// import { getEvents } from '../services/eventsService'; 
-// import { createOrder } from '../services/ordersService';
-// import { useAuth } from '../composables/useAuth'; 
+import { getEvents } from '../services/eventsService';
+import { createOrder } from '../services/ordersService';
+import { useAuth } from '../composables/useAuth';
+import { useNotifications } from '../composables/useNotifications';
 
-
-const isConfirmModalOpen = ref(false);
-const confirmModalType = ref('confirm'); // 'confirm', 'success', 'error'
-const confirmModalTitle = ref('');
-const confirmModalMessage = ref('');
-const confirmModalActionText = ref('Confirm');
-const confirmModalShowCancel = ref(true);
-const pendingOrderPayload = ref(null); 
-
-
-
-function prepareCreateOrder(orderPayload) {
-  pendingOrderPayload.value = orderPayload; 
-  const totalItems = orderPayload.items.reduce((sum, item) => sum + item.quantity, 0);
-  const plural = totalItems > 1 ? 's' : '';
-
-  confirmModalType.value = 'confirm';
-  confirmModalTitle.value = 'Confirm Your Purchase';
-  confirmModalMessage.value = `You are about to purchase ${totalItems} ticket${plural} for "${selectedEvent.value.title}". Do you want to proceed?`;
-  confirmModalActionText.value = 'Yes, Buy Now';
-  confirmModalShowCancel.value = true;
-  isConfirmModalOpen.value = true;
-  
-  closeModal(); 
-}
-
-
-function executeOrder() {
-  isConfirmModalOpen.value = false; 
-  console.log('Order confirmed! Payload:', pendingOrderPayload.value);
-
-
-  showSuccessModal(); 
-  
-  
-}
-
-
-function cancelOrder() {
-  isConfirmModalOpen.value = false;
-  pendingOrderPayload.value = null; 
-  console.log('Order cancelled by user.');
-}
-
-
-function showSuccessModal() {
-  confirmModalType.value = 'success';
-  confirmModalTitle.value = 'Purchase Successful!';
-  confirmModalMessage.value = 'Your tickets have been confirmed. You can view them in the "My Tickets" section.';
-  confirmModalActionText.value = 'Great!';
-  confirmModalShowCancel.value = false; 
-  isConfirmModalOpen.value = true;
-}
-
-function showErrorModal(message) {
-  confirmModalType.value = 'error';
-  confirmModalTitle.value = 'Purchase Failed';
-  confirmModalMessage.value = message;
-  confirmModalActionText.value = 'Close';
-  confirmModalShowCancel.value = false;
-  isConfirmModalOpen.value = true;
-}
-
+// --- Composables ---
+const { user, isLogged } = useAuth();
+const { showSuccess, showError } = useNotifications();
 
 // --- Component State ---
 const events = ref([]);
@@ -134,75 +73,23 @@ const error = ref(null);
 const selectedEvent = ref(null);
 const isModalOpen = ref(false);
 
-// const { user } = useAuth(); // Uncomment when auth is integrated
+// --- Confirmation Modal State ---
+const isConfirmModalOpen = ref(false);
+const confirmModalType = ref('confirm'); // 'confirm', 'success', 'error'
+const confirmModalTitle = ref('');
+const confirmModalMessage = ref('');
+const confirmModalActionText = ref('Confirm');
+const confirmModalShowCancel = ref(true);
+const pendingOrderPayload = ref(null);
 
-// --- Mock Data for Frontend Development ---
-const mockEvents = [
-  { 
-    id: 1, 
-    title: 'Epic Music Concert', 
-    description: 'A night of live music featuring international artists. Get ready to experience an unforgettable evening under the stars.', 
-    venue: 'City Arena', 
-    start_date: '2025-10-01T19:00:00', 
-    end_date: '2025-10-01T23:00:00',
-    banner_url: 'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?q=80&w=2070&auto=format&fit=crop',
-    ticket_types:[
-      {id:1, name:'VIP', price:100, quantity:50, sold: 10},
-      {id:2, name:'Standard', price:50, quantity:200, sold: 85}
-    ] 
-  },
-  { 
-    id: 2, 
-    title: 'Future of Tech Conference', 
-    description: 'Join industry leaders to learn about the future of Vue 3, Laravel, and AI. A must-attend for all developers.', 
-    venue: 'Grand Tech Hall', 
-    start_date: '2025-11-05T09:00:00', 
-    end_date: '2025-11-06T17:00:00',
-    banner_url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=2062&auto=format&fit=crop',
-    ticket_types:[
-      {id:3, name:'All-Access Pass', price:300, quantity:250, sold: 150},
-      {id:4, name:'Student Pass', price:75, quantity:100, sold: 98}
-    ] 
-  },
-  { 
-    id: 3, 
-    title: 'Art & Design Expo', 
-    description: 'Explore stunning creations from local and international artists. Workshops and live demonstrations available.', 
-    venue: 'The Creative Hub', 
-    start_date: '2025-12-10T10:00:00', 
-    end_date: null,
-    banner_url: null, // Example with no banner
-    ticket_types:[
-      {id:5, name:'General Admission', price:25, quantity:500, sold: 498},
-    ] 
-  },
-];
-
-// --- Data Fetching ---
-onMounted(async ( ) => {
-  // To work with the backend, replace the mock function with the real API call.
-  await fetchMockData();
-  // await fetchApiData(); // UNCOMMENT THIS LINE TO USE THE REAL API
-});
-
-// --- MOCK FUNCTION (for frontend only) ---
-async function fetchMockData() {
-  isLoading.value = true;
-  error.value = null;
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1000)); 
-  events.value = mockEvents;
-  isLoading.value = false;
-}
-
-/*
-// --- REAL API FUNCTION (use when backend is ready) ---
-async function fetchApiData() {
+// --- Fetch events from backend ---
+async function fetchEvents() {
   isLoading.value = true;
   error.value = null;
   try {
-    const response = await getEvents();
-    events.value = response.data;
+    const res = await getEvents();
+    // Assign the correct data array from paginated response
+    events.value = res.data.data;
   } catch (err) {
     error.value = 'Failed to load events. Please try again later.';
     console.error(err);
@@ -210,7 +97,6 @@ async function fetchApiData() {
     isLoading.value = false;
   }
 }
-*/
 
 // --- Modal Handling ---
 function openModal(event) {
@@ -222,30 +108,53 @@ function closeModal() {
   isModalOpen.value = false;
 }
 
-// --- Order Creation ---
-function handleCreateOrder(orderPayload) {
-  // For now, we just simulate the order creation
-  console.log('Creating order with payload:', orderPayload);
-  alert(`Order submitted for event: "${selectedEvent.value.title}"! Check the console for details.`);
-  
-  /*
-  // --- REAL ORDER CREATION LOGIC (use when backend is ready) ---
-  if (!user.value) {
-    alert('Please log in to purchase tickets.');
-    // You can redirect to login page here: router.push('/login');
+// --- Prepare Order ---
+function prepareCreateOrder(orderPayload) {
+  if (!isLogged()) {
+    showError('Please log in to purchase tickets.');
     return;
   }
+  pendingOrderPayload.value = orderPayload;
+  const totalItems = orderPayload.items.reduce((sum, item) => sum + item.quantity, 0);
+  const plural = totalItems > 1 ? 's' : '';
 
-  try {
-    const response = await createOrder(selectedEvent.value.id, orderPayload);
-    alert(`Order created successfully! Order ID: ${response.data.order_id}`);
-    closeModal();
-  } catch (err) {
-    alert('Failed to create order: ' + (err.response?.data?.message || 'Please try again.'));
-    console.error(err);
-  }
-  */
-  
+  confirmModalType.value = 'confirm';
+  confirmModalTitle.value = 'Confirm Your Purchase';
+  confirmModalMessage.value = `You are about to purchase ${totalItems} ticket${plural} for "${selectedEvent.value.title}". Do you want to proceed?`;
+  confirmModalActionText.value = 'Yes, Buy Now';
+  confirmModalShowCancel.value = true;
+  isConfirmModalOpen.value = true;
+
   closeModal();
 }
+
+// --- Execute Order ---
+async function executeOrder() {
+  isConfirmModalOpen.value = false;
+  if (!pendingOrderPayload.value) return;
+
+  try {
+    console.log("Order payload:", pendingOrderPayload.value);
+    console.log(JSON.stringify(pendingOrderPayload.value, null, 2));
+
+
+    await createOrder(selectedEvent.value.id, pendingOrderPayload.value);
+    showSuccess('Purchase successful! Your tickets are now confirmed.');
+  } catch (err) {
+    showError(err.response?.data?.message || 'Failed to create order.');
+  } finally {
+    pendingOrderPayload.value = null;
+  }
+}
+
+// --- Cancel Order ---
+function cancelOrder() {
+  isConfirmModalOpen.value = false;
+  pendingOrderPayload.value = null;
+}
+
+// --- Lifecycle ---
+onMounted(() => {
+  fetchEvents();
+});
 </script>

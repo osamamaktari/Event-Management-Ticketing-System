@@ -34,30 +34,34 @@
         </div>
       </div>
     </div>
-    
+
+    <!-- Empty State -->
     <div v-else class="text-center text-gray-500 border-2 border-dashed p-12 rounded-lg">
       <p class="text-xl font-semibold">You haven't created any events yet.</p>
       <p>Click the button above to get started.</p>
     </div>
 
     <!-- Modals Section -->
+    <!-- Only show modal if selectedEvent exists to prevent prop type errors -->
     <EventFormModal 
       :isOpen="isEventModalOpen" 
-      :event="selectedEvent" 
+      :event="selectedEvent || {}" 
       @close="closeEventModal" 
       @save="handleSaveEvent" 
     />
     <TicketTypesModal 
+      v-if="selectedEvent"
       :isOpen="isTicketTypesModalOpen" 
       :event="selectedEvent" 
       @close="closeTicketTypesModal" 
     />
     <AttendeesModal 
+      v-if="selectedEvent"
       :isOpen="isAttendeesModalOpen" 
       :event="selectedEvent" 
       @close="closeAttendeesModal" 
     />
-    
+
     <!-- Deletion Confirmation Modal -->
     <ConfirmationModal
       :isOpen="isConfirmModalOpen"
@@ -67,71 +71,27 @@
       @confirm="handleDeleteEvent"
       @cancel="isConfirmModalOpen = false"
     />
-
-    <!-- Notification Modal for success/error messages -->
-    <ConfirmationModal
-      :isOpen="isNotifyOpen"
-      :type="notifyType"
-      :title="notifyTitle"
-      :message="notifyMessage"
-      confirmText="OK"
-      :showCancel="false"
-      @confirm="isNotifyOpen = false"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-
-// --- Import Modals ---
-// Assuming all components are in the same 'src/components/' folder
 import EventFormModal from '../components/EventFormModal.vue';
 import TicketTypesModal from '../components/TicketTypesModal.vue';
 import AttendeesModal from '../components/AttendeesModal.vue';
 import ConfirmationModal from '../components/ConfirmationModal.vue';
+import { useNotifications } from '../composables/useNotifications.js';
+import { getOrganizerEvents, createEvent, updateEvent, deleteEvent } from '../services/eventsService.js';
 
-// --- 1. Mock Data for Frontend Development (This is the crucial part) ---
-const mockOrganizerEvents = [
-  { 
-    id: 1, 
-    title: 'My Awesome Concert', 
-    description: 'A great concert featuring the best artists in town. Get ready for an unforgettable night of music and fun.',
-    venue: 'City Arena', 
-    start_date: '2025-10-01T19:00:00', 
-    end_date: '2025-10-01T23:00:00', 
-    banner_url: 'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?q=80&w=2070&auto=format&fit=crop', 
-    status: 'approved',
-    ticket_types: [
-      {id: 1, name: 'VIP', price: 100, quantity: 50, sold: 10},
-      {id: 2, name: 'Standard', price: 50, quantity: 200, sold: 85},
-    ],
-    tickets: [
-      {id: 101, attendee: {name: 'John Doe', email: 'john@example.com'}, ticket_type: {name: 'VIP'}, status: 'active'},
-      {id: 102, attendee: {name: 'Jane Smith', email: 'jane@example.com'}, ticket_type: {name: 'VIP'}, status: 'used'},
-      {id: 103, attendee: {name: 'Peter Jones', email: 'peter@example.com'}, ticket_type: {name: 'Standard'}, status: 'active'},
-    ]
-  },
-  { 
-    id: 2, 
-    title: 'My Tech Meetup', 
-    description: 'A meetup for developers interested in the latest web technologies. Networking and learning opportunities.',
-    venue: 'The Tech Hub', 
-    start_date: '2025-11-05T09:00:00', 
-    end_date: null, 
-    banner_url: null, 
-    status: 'pending',
-    ticket_types: [],
-    tickets: []
-  },
-];
+// Initialize toast notifications
+const { showSuccess, showError } = useNotifications();
 
-// --- Component State ---
-const organizerEvents = ref([] );
+// Component state
+const organizerEvents = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 
-// --- Modal State ---
+// Modal state
 const isEventModalOpen = ref(false);
 const isTicketTypesModalOpen = ref(false);
 const isAttendeesModalOpen = ref(false);
@@ -139,27 +99,22 @@ const isConfirmModalOpen = ref(false);
 const selectedEvent = ref(null);
 const eventToHandle = ref(null);
 
-// --- Notification Modal State ---
-const isNotifyOpen = ref(false);
-const notifyType = ref('success');
-const notifyTitle = ref('');
-const notifyMessage = ref('');
-
-// --- Data Fetching ---
-onMounted(async () => {
-  await fetchMockData();
-});
-
-// --- MOCK FUNCTION (for frontend only) ---
-async function fetchMockData() {
+// Fetch organizer events from API
+async function fetchOrganizerEvents() {
   isLoading.value = true;
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  // This line assigns the mock data to the reactive ref, which updates the UI
-  organizerEvents.value = mockOrganizerEvents;
-  isLoading.value = false;
+  error.value = null;
+  try {
+    const res = await getOrganizerEvents();
+    organizerEvents.value = res.data.data || [];
+  } catch (err) {
+    console.error(err);
+    error.value = err.response?.data?.message || 'Failed to load your events.';
+  } finally {
+    isLoading.value = false;
+  }
 }
 
-// --- Modal Control ---
+// Modal control functions
 function openEventModal(event = null) {
   selectedEvent.value = event;
   isEventModalOpen.value = true;
@@ -178,17 +133,22 @@ function openAttendeesModal(event) {
 }
 function closeAttendeesModal() { isAttendeesModalOpen.value = false; }
 
-// --- CRUD Operations (Simulated) ---
+// Event CRUD functions
 async function handleSaveEvent(formData) {
-  console.log('Saving event with data:', Object.fromEntries(formData.entries()));
-  closeEventModal();
-  
-  notifyType.value = 'success';
-  notifyTitle.value = 'Event Saved';
-  notifyMessage.value = `(Simulation) The event has been saved successfully.`;
-  isNotifyOpen.value = true;
-
-  await fetchMockData();
+  try {
+    if (selectedEvent.value?.id) {
+      await updateEvent(selectedEvent.value.id, formData);
+      showSuccess('Event updated successfully.');
+    } else {
+      await createEvent(formData);
+      showSuccess('Event created successfully.');
+    }
+    closeEventModal();
+    await fetchOrganizerEvents();
+  } catch (err) {
+    console.error(err);
+    showError(err.response?.data?.message || 'Failed to save event.');
+  }
 }
 
 function confirmDeleteEvent(event) {
@@ -197,18 +157,20 @@ function confirmDeleteEvent(event) {
 }
 
 async function handleDeleteEvent() {
-  console.log('Deleting event:', eventToHandle.value.id);
-  isConfirmModalOpen.value = false; 
-
-  notifyType.value = 'success';
-  notifyTitle.value = 'Event Deleted';
-  notifyMessage.value = `(Simulation) The event "${eventToHandle.value.title}" has been deleted.`;
-  isNotifyOpen.value = true;
-
-  await fetchMockData();
+  if (!eventToHandle.value) return;
+  try {
+    await deleteEvent(eventToHandle.value.id);
+    showSuccess(`Event "${eventToHandle.value.title}" has been deleted.`);
+    await fetchOrganizerEvents();
+  } catch (err) {
+    console.error(err);
+    showError(err.response?.data?.message || 'Failed to delete event.');
+  } finally {
+    isConfirmModalOpen.value = false;
+  }
 }
 
-// --- Helper Functions ---
+// Helper function for status badge
 function statusBadgeClass(status) {
   const styles = {
     pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
@@ -218,4 +180,9 @@ function statusBadgeClass(status) {
   };
   return styles[status] || styles.cancelled;
 }
+
+// Lifecycle hook
+onMounted(() => {
+  fetchOrganizerEvents();
+});
 </script>

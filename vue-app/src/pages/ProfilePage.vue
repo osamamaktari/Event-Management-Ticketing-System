@@ -55,7 +55,6 @@
             <p class="font-medium text-gray-800 dark:text-gray-200">Email Notifications</p>
             <p class="text-sm text-gray-500 dark:text-gray-400">Receive emails about your tickets and event updates.</p>
           </div>
-          <!-- A simple toggle switch component could be used here later -->
           <button @click="toggleNotifications" :class="notificationSettings.email ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors">
             <span :class="notificationSettings.email ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
           </button>
@@ -63,56 +62,30 @@
       </div>
     </div>
 
-    <!-- Notification Modal for success/error messages -->
-    <ConfirmationModal
-      :isOpen="isNotifyOpen"
-      :type="notifyType"
-      :title="notifyTitle"
-      :message="notifyMessage"
-      confirmText="OK"
-      :showCancel="false"
-      @confirm="isNotifyOpen = false"
-    />
+    <!-- The Notification Modal has been removed from here -->
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-// We will need the auth composable to get the current user's data
+// 1. Import the necessary composables
 import { useAuth } from '../composables/useAuth';
-// We reuse the confirmation modal for notifications
-import ConfirmationModal from '../components/ConfirmationModal.vue';
+import { useNotifications } from '../composables/useNotifications.js';
 
-/*
-// --- UNCOMMENT THIS SECTION WHEN API IS READY ---
-import { updateUserProfile, changeUserPassword } from '../services/userService';
-*/
-
-// --- Get user data from our auth composable ---
+// 2. Initialize the composables
 const { user } = useAuth();
+const { showSuccess, showError, showInfo } = useNotifications();
 
 // --- Component State ---
-const profileForm = ref({
-  name: '',
-  email: '',
-  phone: ''
-});
+const profileForm = ref({ name: '', email: '', phone: '' });
+const passwordForm = ref({ current_password: '', new_password: '', new_password_confirmation: '' });
+const notificationSettings = ref({ email: true });
 
-const passwordForm = ref({
-  current_password: '',
-  new_password: '',
-  new_password_confirmation: ''
-});
-
-const notificationSettings = ref({
-  email: true // Default to true
-});
-
-// --- Notification Modal State ---
-const isNotifyOpen = ref(false);
-const notifyType = ref('success');
-const notifyTitle = ref('');
-const notifyMessage = ref('');
+// 3. Remove the state variables for the old notification modal
+// const isNotifyOpen = ref(false);
+// const notifyType = ref('success');
+// const notifyTitle = ref('');
+// const notifyMessage = ref('');
 
 // --- Populate form with user data when component is mounted ---
 onMounted(() => {
@@ -120,73 +93,36 @@ onMounted(() => {
     profileForm.value.name = user.value.name;
     profileForm.value.email = user.value.email;
     profileForm.value.phone = user.value.phone || '';
-    // In a real app, you would fetch notification settings from the API
   }
 });
 
 // --- Form Submission Handlers (Simulated) ---
 async function updateProfile() {
-  // --- SIMULATION LOGIC ---
   console.log('Updating profile with:', profileForm.value);
   
-  // Show success notification
-  notifyType.value = 'success';
-  notifyTitle.value = 'Profile Updated';
-  notifyMessage.value = '(Simulation) Your personal information has been updated successfully.';
-  isNotifyOpen.value = true;
-
-  /*
-  // --- REAL API LOGIC ---
-  try {
-    await updateUserProfile(profileForm.value);
-    // Show success notification...
-  } catch (err) {
-    // Show error notification...
-  }
-  */
+  // 4. Use the toast notification
+  showSuccess('(Simulation) Your personal information has been updated successfully.');
 }
 
 async function changePassword() {
-  // --- SIMULATION LOGIC ---
   if (passwordForm.value.new_password !== passwordForm.value.new_password_confirmation) {
-    notifyType.value = 'error';
-    notifyTitle.value = 'Password Mismatch';
-    notifyMessage.value = 'The new password and confirmation do not match.';
-    isNotifyOpen.value = true;
+    // 5. Use the error toast for validation errors
+    showError('The new password and confirmation do not match.');
     return;
   }
   console.log('Changing password...');
 
-  // Show success notification
-  notifyType.value = 'success';
-  notifyTitle.value = 'Password Updated';
-  notifyMessage.value = '(Simulation) Your password has been changed successfully.';
-  isNotifyOpen.value = true;
+  // 6. Use the success toast
+  showSuccess('(Simulation) Your password has been changed successfully.');
   
-  // Clear password fields after submission
   passwordForm.value = { current_password: '', new_password: '', new_password_confirmation: '' };
-
-  /*
-  // --- REAL API LOGIC ---
-  try {
-    await changeUserPassword(passwordForm.value);
-    // Show success notification...
-  } catch (err) {
-    // Show error notification...
-  }
-  */
 }
 
 function toggleNotifications() {
   notificationSettings.value.email = !notificationSettings.value.email;
-  // --- SIMULATION LOGIC ---
   console.log('Email notifications toggled to:', notificationSettings.value.email);
 
-  notifyType.value = 'info';
-  notifyTitle.value = 'Settings Updated';
-  notifyMessage.value = `Email notifications have been ${notificationSettings.value.email ? 'enabled' : 'disabled'}.`;
-  isNotifyOpen.value = true;
-  
-  // In a real app, you would call an API to save this preference.
+  // 7. Use the info toast for settings changes
+  showInfo(`Email notifications have been ${notificationSettings.value.email ? 'enabled' : 'disabled'}.`);
 }
 </script>
