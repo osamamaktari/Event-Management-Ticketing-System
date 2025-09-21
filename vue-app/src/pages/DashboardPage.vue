@@ -1,70 +1,96 @@
 <template>
   <div class="p-4 sm:p-6 md:p-8">
-    <!-- 1. Added margin-bottom here to create space below the title -->
     <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">Dashboard</h2>
 
-    <!-- Loading and Error States -->
-    <div v-if="isLoading" class="text-center text-gray-500 py-10">Loading dashboard data...</div>
-    <div v-else-if="error" class="text-center text-red-500 bg-red-100 p-4 rounded-lg">{{ error }}</div>
+    <!-- Loading State -->
+    <div v-if="isLoading" class="text-center text-gray-500 py-10">
+      Loading dashboard data...
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="text-center text-red-500 bg-red-100 p-4 rounded-lg">
+      {{ error }}
+    </div>
 
     <!-- Dashboard Content -->
     <div v-else>
       <!-- Key Metrics Cards -->
-      <!-- 2. Changed mb-30 (which doesn't exist) to mb-8 for consistent spacing -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
           <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Revenue</p>
-          <p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">${{ analytics.totalRevenue.toLocaleString() }}</p>
+          <p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+            ${{ (analytics.totalRevenue ?? 0).toLocaleString() }}
+          </p>
         </div>
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
           <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tickets Sold</p>
-          <p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{{ analytics.totalTicketsSold.toLocaleString() }}</p>
+          <p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+            {{ (analytics.totalTicketsSold ?? 0).toLocaleString() }}
+          </p>
         </div>
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
           <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Events</p>
-          <p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{{ analytics.totalEvents }}</p>
+          <p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+            {{ analytics.totalEvents ?? 0 }}
+          </p>
         </div>
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
           <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Attendees</p>
-          <p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{{ analytics.totalAttendees }}</p>
+          <p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+            {{ analytics.totalAttendees ?? 0 }}
+          </p>
         </div>
       </div>
 
       <!-- Charts Section -->
-      <!-- 3. Also changed mb-30 to mb-8 here to create space below the charts -->
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
         <div class="lg:col-span-3 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md h-96">
           <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Tickets Sold Per Event</h3>
-          <BarChart v-if="!isLoading" :chart-data="ticketsSoldChartData" />
+          <BarChart v-if="analytics.ticketsSoldPerEvent?.length" :chart-data="ticketsSoldChartData" />
+          <p v-else class="text-gray-500 text-sm">No data available</p>
         </div>
         <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md h-96">
           <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Revenue Over Time</h3>
-          <LineChart v-if="!isLoading" :chart-data="revenueChartData" />
+          <LineChart v-if="analytics.revenueByMonth?.length" :chart-data="revenueChartData" />
+          <p v-else class="text-gray-500 text-sm">No data available</p>
         </div>
       </div>
 
       <!-- Lists Section (Top Events & Recent Orders) -->
-      <!-- This is the last section, so it doesn't need a margin-bottom -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
           <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Top Performing Events</h3>
           <ul class="space-y-4">
-            <li v-for="event in analytics.topEvents" :key="event.id" class="flex items-center justify-between">
+            <li
+              v-for="event in analytics.topEvents || []"
+              :key="event.id"
+              class="flex items-center justify-between"
+            >
               <span class="font-medium text-gray-800 dark:text-gray-200">{{ event.title }}</span>
-              <span class="font-bold text-indigo-600 dark:text-indigo-400">${{ event.revenue.toLocaleString() }}</span>
+              <span class="font-bold text-indigo-600 dark:text-indigo-400">
+                ${{ (event.revenue ?? 0).toLocaleString() }}
+              </span>
             </li>
+            <li v-if="!analytics.topEvents?.length" class="text-sm text-gray-500">No events data</li>
           </ul>
         </div>
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
           <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Recent Orders</h3>
           <ul class="space-y-4">
-            <li v-for="order in analytics.recentOrders" :key="order.id" class="flex items-center justify-between">
+            <li
+              v-for="order in analytics.recentOrders || []"
+              :key="order.id"
+              class="flex items-center justify-between"
+            >
               <div>
                 <p class="font-medium text-gray-800 dark:text-gray-200">{{ order.attendeeName }}</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ order.eventName }}</p>
               </div>
-              <span class="text-sm text-gray-700 dark:text-gray-300">${{ order.totalAmount.toLocaleString() }}</span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">
+                ${{ (order.totalAmount ?? 0).toLocaleString() }}
+              </span>
             </li>
+            <li v-if="!analytics.recentOrders?.length" class="text-sm text-gray-500">No recent orders</li>
           </ul>
         </div>
       </div>
@@ -73,42 +99,22 @@
 </template>
 
 <script setup>
-// The <script> section remains exactly the same as the previous version.
-// No changes are needed here.
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import BarChart from '../components/charts/BarChart.vue';
 import LineChart from '../components/charts/LineChart.vue';
+import api from '../services/api';
 
-const mockAnalyticsData = {
-  totalRevenue: 75950,
-  totalTicketsSold: 850,
-  totalEvents: 12,
-  totalAttendees: 620,
-  ticketsSoldPerEvent: [
-    { eventId: 1, title: 'Concert', ticketsSold: 350 },
-    { eventId: 2, title: 'Tech Conf', ticketsSold: 220 },
-    { eventId: 3, title: 'Art Expo', ticketsSold: 150 },
-    { eventId: 4, title: 'Food Fest', ticketsSold: 80 },
-    { eventId: 5, title: 'Book Fair', ticketsSold: 50 },
-  ],
-  revenueByMonth: [
-    { month: 'Jan', revenue: 10500 }, { month: 'Feb', revenue: 15200 },
-    { month: 'Mar', revenue: 12300 }, { month: 'Apr', revenue: 18400 },
-    { month: 'May', revenue: 19550 },
-  ],
-  topEvents: [
-    { id: 1, title: 'Concert', revenue: 32500 },
-    { id: 2, title: 'Tech Conf', revenue: 28000 },
-    { id: 3, title: 'Art Expo', revenue: 9500 },
-  ],
-  recentOrders: [
-    { id: 101, attendeeName: 'Alice Johnson', eventName: 'Concert', totalAmount: 200 },
-    { id: 102, attendeeName: 'Bob Williams', eventName: 'Tech Conf', totalAmount: 300 },
-    { id: 103, attendeeName: 'Charlie Brown', eventName: 'Concert', totalAmount: 50 },
-  ]
-};
+const analytics = ref({
+  totalRevenue: 0,
+  totalTicketsSold: 0,
+  totalEvents: 0,
+  totalAttendees: 0,
+  ticketsSoldPerEvent: [],
+  revenueByMonth: [],
+  topEvents: [],
+  recentOrders: [],
+});
 
-const analytics = ref({});
 const isLoading = ref(true);
 const error = ref(null);
 
@@ -118,7 +124,7 @@ const ticketsSoldChartData = computed(() => ({
     label: 'Tickets Sold',
     backgroundColor: '#4F46E5',
     data: analytics.value.ticketsSoldPerEvent?.map(e => e.ticketsSold) || [],
-  }]
+  }],
 }));
 
 const revenueChartData = computed(() => ({
@@ -127,20 +133,27 @@ const revenueChartData = computed(() => ({
     label: 'Revenue',
     borderColor: '#10B981',
     backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    tension: 0.3,
+        tension: 0.4,  
+      pointRadius: 4,
     fill: true,
     data: analytics.value.revenueByMonth?.map(m => m.revenue) || [],
-  }]
+  }],
 }));
 
-onMounted(async () => {
-  await fetchMockData();
-});
-
-async function fetchMockData() {
+async function fetchDashboardData() {
   isLoading.value = true;
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  analytics.value = mockAnalyticsData;
-  isLoading.value = false;
+  error.value = null;
+
+  try {
+    const res = await api.get('/admin/dashboard');
+    analytics.value = { ...analytics.value, ...res.data }; // دمج البيانات مع الافتراضية
+  } catch (err) {
+    console.error(err);
+    error.value = err.response?.data?.message || 'Failed to load dashboard data.';
+  } finally {
+    isLoading.value = false;
+  }
 }
+
+onMounted(fetchDashboardData);
 </script>
