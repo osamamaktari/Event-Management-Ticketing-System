@@ -1,14 +1,12 @@
 // src/services/api.js
 import axios from 'axios';
 
-export const BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+export const BASE_URL = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
 
 const api = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
-  withCredentials: true, // important for Sanctum cookie auth
-  headers: {
-    'Accept': 'application/json',
-  },
+  withCredentials: true,
+  headers: { 'Accept': 'application/json' },
 });
 
 export function setAuthToken(token) {
@@ -17,3 +15,4 @@ export function setAuthToken(token) {
 }
 
 export default api;
+
