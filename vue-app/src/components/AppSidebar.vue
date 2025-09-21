@@ -41,6 +41,6 @@ const navLinks = [
   { to: '/event-management', text: 'Manage Events', icon: Cog8ToothIcon },
   { to: '/dashboard', text: 'Dashboard', icon: ChartPieIcon },
   { to: '/profile', text: 'Profile', icon: UserCircleIcon },
-  { to: '/auth', text: 'Login/Register', icon: LockClosedIcon }
+  { to: '/auth', text: 'Account setting', icon: LockClosedIcon }
 ];
 </script>
