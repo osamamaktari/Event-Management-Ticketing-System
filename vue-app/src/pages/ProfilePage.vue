@@ -80,17 +80,19 @@ import { ref, onMounted } from 'vue';
 import api from '../services/api';
 import { useAuth } from '../composables/useAuth';
 import { useNotifications } from '../composables/useNotifications';
+import { useRouter } from 'vue-router';
 
-// Use composables
+// --- Composables ---
 const { user, fetchUser, logout } = useAuth();
 const { showSuccess, showError, showInfo } = useNotifications();
+const router = useRouter();
 
-// Local state for forms
+// --- Local state for forms ---
 const profileForm = ref({ name: '', email: '', phone: '' });
 const passwordForm = ref({ current_password: '', new_password: '', new_password_confirmation: '' });
 const notificationSettings = ref({ email: true });
 
-// Fill profile form with user data when mounted
+// --- Fill profile form with user data ---
 onMounted(() => {
   if (user.value) {
     profileForm.value.name = user.value.name;
@@ -99,18 +101,18 @@ onMounted(() => {
   }
 });
 
-// Update profile with API call
+// --- Update profile ---
 async function updateProfile() {
   try {
-    const res = await api.put('/user/profile', profileForm.value);
+    await api.put('/user/profile', profileForm.value);
     showSuccess('Your profile has been updated.');
-    await fetchUser(); // refresh user data in localStorage
+    await fetchUser(); // refresh user data
   } catch (err) {
     showError(err.response?.data?.message || 'Failed to update profile');
   }
 }
 
-// Change password with API call
+// --- Change password ---
 async function changePassword() {
   try {
     await api.put('/user/password', {
@@ -125,16 +127,26 @@ async function changePassword() {
   }
 }
 
-// Toggle notification setting (simulated)
+// --- Toggle notification ---
 function toggleNotifications() {
   notificationSettings.value.email = !notificationSettings.value.email;
   showInfo(`Email notifications have been ${notificationSettings.value.email ? 'enabled' : 'disabled'}.`);
 }
 
-// Logout user
+
 async function logoutUser() {
-  await logout();
-  showInfo('You have been logged out.');
-  window.location.href = '/login'; // redirect to login page
+  try {
+    await logout(); 
+    showSuccess('You have been logged out successfully.');
+
+    
+    setTimeout(() => {
+      router.replace('/auth'); 
+    }, 1000);
+
+  } catch (err) {
+    showError(err.message || 'Failed to log out. Please try again.');
+  }
 }
 </script>
+

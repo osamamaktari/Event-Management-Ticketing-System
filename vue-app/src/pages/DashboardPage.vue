@@ -127,18 +127,29 @@ const ticketsSoldChartData = computed(() => ({
   }],
 }));
 
-const revenueChartData = computed(() => ({
-  labels: analytics.value.revenueByMonth?.map(m => m.month) || [],
-  datasets: [{
-    label: 'Revenue',
-    borderColor: '#10B981',
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-        tension: 0.4,  
+const revenueChartData = computed(() => {
+  const months = analytics.value.revenueByMonth?.map(m => new Date(m.month).toLocaleString('default', { month: 'short' })) || [];
+  const revenues = analytics.value.revenueByMonth?.map(m => parseFloat(m.revenue)) || [];
+  if (revenues.length === 1) {
+    months.unshift('Prev'); // dummy label
+    revenues.unshift(0);    // dummy value
+  }
+
+  return {
+    labels: months,
+    datasets: [{
+      label: 'Revenue',
+      borderColor: '#10B981',
+      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+      tension: 0.4,  
       pointRadius: 4,
-    fill: true,
-    data: analytics.value.revenueByMonth?.map(m => m.revenue) || [],
-  }],
-}));
+      fill: true,
+      data: revenues,
+    }],
+  };
+});
+
+
 
 async function fetchDashboardData() {
   isLoading.value = true;
@@ -146,7 +157,7 @@ async function fetchDashboardData() {
 
   try {
     const res = await api.get('/admin/dashboard');
-    analytics.value = { ...analytics.value, ...res.data }; // دمج البيانات مع الافتراضية
+    analytics.value = { ...analytics.value, ...res.data }; 
   } catch (err) {
     console.error(err);
     error.value = err.response?.data?.message || 'Failed to load dashboard data.';
@@ -157,3 +168,4 @@ async function fetchDashboardData() {
 
 onMounted(fetchDashboardData);
 </script>
+  
