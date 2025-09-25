@@ -2,7 +2,12 @@
   <transition name="fade">
     <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70" @click.self="close">
       <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full m-4 max-h-[90vh] flex flex-col">
-        
+       
+        <img v-if="imageUrl" 
+     :src="imageUrl" 
+     alt="Event banner" 
+     class="w-40 h-40 object-cover   rounded-t-xl">
+
         <!-- Modal Header -->
         <div class="p-6 border-b dark:border-gray-700">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ event.title }}</h2>
@@ -64,6 +69,17 @@ import { useNotifications } from '../composables/useNotifications.js';
 
 // 2. Initialize the composable
 const { showInfo } = useNotifications( );
+
+const backendUrl = 'http://127.0.0.1:8000'; 
+
+const imageUrl = computed(( ) => {
+  if (props.event.banner_url) {
+    return `${backendUrl}/storage/${props.event.banner_url}`;
+  }
+  return null;
+});
+
+
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },

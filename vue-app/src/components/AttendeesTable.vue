@@ -10,7 +10,6 @@
         </tr>
       </thead>
       <tbody v-if="tickets.length" class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
-        <!-- The data structure is now ticket.attendee.name, etc. -->
         <tr v-for="ticket in tickets" :key="ticket.id">
           <td class="px-4 py-4 whitespace-nowrap">
             <div class="font-medium">{{ ticket.attendee.name }}</div>
@@ -23,7 +22,7 @@
             </span>
           </td>
           <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
-            <button v-if="ticket.status === 'active'" @click="$emit('check-in', ticket.id)" class="text-indigo-600 hover:text-indigo-900">Check-in</button>
+            <button v-if="ticket.status === 'valid'" @click="$emit('check-in', ticket.id)" class="text-indigo-600 hover:text-indigo-900">Check-in</button>
           </td>
         </tr>
       </tbody>
@@ -38,14 +37,17 @@
 
 <script setup>
 defineProps({
-  tickets: { type: Array, required: true }
+  tickets: {
+    type: Array,
+    default: () => []
+  }
 });
 
 defineEmits(['check-in']);
 
 function statusClass(status) {
   const styles = {
-    active: 'bg-green-100 text-green-800',
+    valid: 'bg-green-100 text-green-800',
     used: 'bg-yellow-100 text-yellow-800',
     cancelled: 'bg-red-100 text-red-800',
   };

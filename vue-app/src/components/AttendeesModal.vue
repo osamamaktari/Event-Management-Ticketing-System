@@ -9,8 +9,7 @@
 
         <!-- Body -->
         <div class="p-6 overflow-y-auto">
-          <!-- We reuse the AttendeesTable component here -->
-          <AttendeesTable :tickets="event.tickets" @check-in="handleCheckIn" />
+          <AttendeesTable :tickets="tickets" @check-in="handleCheckIn" />
         </div>
 
         <!-- Footer -->
@@ -23,19 +22,42 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue';
 import AttendeesTable from '../components/AttendeesTable.vue';
+import { getEventTickets } from '../services/eventsService.js';
 
-defineProps({
+const props = defineProps({
   isOpen: Boolean,
   event: { type: Object, required: true }
 });
 
 const emit = defineEmits(['close']);
 
+const tickets = ref([]);
+const isLoading = ref(false);
+
+// Watch the modal open state and event changes
+watch(
+  () => [props.isOpen, props.event],
+  async ([open, newEvent]) => {
+    if (open && newEvent?.id) {
+      isLoading.value = true;
+      try {
+        const res = await getEventTickets(newEvent.id);
+        tickets.value = res.data || []; 
+      } catch (err) {
+        console.error('Failed to load tickets:', err);
+        tickets.value = [];
+      } finally {
+        isLoading.value = false;
+      }
+    }
+  },
+  { immediate: true }
+);
+
 function handleCheckIn(ticketId) {
-  // Simulation
   alert(`(Simulation) Checking in ticket ID: ${ticketId}`);
-  console.log('Checking in ticket:', ticketId);
 }
 
 function close() {

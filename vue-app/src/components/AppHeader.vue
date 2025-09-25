@@ -1,66 +1,152 @@
-<!-- 
-
 <template>
-  <header class="bg-indigo-600 text-white p-4 flex justify-between items-center">
-    <button class="md:hidden" @click="$emit('toggleSidebar')">☰</button>
-    <h1 class="text-lg font-bold">{{ title }}</h1>
-  </header>
-</template>
-
-<script setup>
-defineProps({
-  title: { type: String, default: 'Event Management' }
-});
-</script> -->
-
-<template>
- 
-  
-  <header class="h-20 bg-gray-600 dark:bg-gray-800 text-white p-4 flex justify-between items-center shadow-md">
-   
+  <header
+    class="h-20 bg-gray-600 dark:bg-gray-800 text-white p-4 flex justify-between items-center shadow-md"
+  >
+    <!-- Left Side -->
     <div class="flex items-center gap-4">
       <button class="md:hidden text-white" @click="$emit('toggleSidebar')">
-  
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 12h16"></path></svg>
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          ></path>
+        </svg>
       </button>
-        <TicketIcon class="w-8 h-8" />
-        <h1 class="text-2xl font-bold">Eventify</h1>
+      <TicketIcon class="w-8 h-8" />
+      <h1 class="text-2xl font-bold">Eventify</h1>
     </div>
 
+    <!-- Right Side -->
+    <div class="flex items-center gap-4">
+      <!-- Dark Mode Button -->
+      <button
+        @click="$emit('toggleDarkMode')"
+        class="p-2 rounded-full hover:bg-white/20 dark:hover:bg-gray-700 focus:outline-none transition-colors"
+      >
+        <span v-if="isDark">
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 
+                 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 
+                 0l-.707.707M6.343 17.657l-.707.707M16 
+                 12a4 4 0 11-8 0 4 4 0 018 0z"
+            ></path>
+          </svg>
+        </span>
+        <span v-else>
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 
+                 3.646 9.003 9.003 0 0012 21a9.003 
+                 9.003 0 008.354-5.646z"
+            ></path>
+          </svg>
+        </span>
+      </button>
 
-    <button @click="$emit('toggleDarkMode' )" class="p-2 rounded-full hover:bg-white/20 dark:hover:bg-gray-700 focus:outline-none transition-colors">
-      <span v-if="isDark">
-  
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-      </span>
-      <span v-else>
-     
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-      </span>
-    </button>
+      <!-- Notifications -->
+      <button
+        class="relative p-2 rounded-full hover:bg-white/20 dark:hover:bg-gray-700 focus:outline-none transition-colors"
+      >
+        <BellIcon class="w-6 h-6" />
+        <!-- Badge -->
+        <span
+          v-if="notifications > 0"
+          class="absolute top-1 right-1 bg-red-500 text-xs w-5 h-5 rounded-full flex items-center justify-center"
+        >
+          {{ notifications }}
+        </span>
+      </button>
 
+      <!-- Search Input -->
+      <div class="relative hidden md:block">
+        <input
+          v-model="searchQuery"
+          @keyup.enter="doSearch"
+            @input="$emit('search', $event.target.value)"
+          type="text"
+          placeholder="Search..."
+          class="rounded-lg px-4 py-2 text-black dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <button
+          @click="doSearch"
+          class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-4.35-4.35M10 
+                 18a8 8 0 100-16 8 8 0 000 16z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </div>
   </header>
 </template>
 
 <script setup>
-import { 
- 
-  TicketIcon, 
-
-} from '@heroicons/vue/24/outline';
+import { TicketIcon, BellIcon } from "@heroicons/vue/24/outline";
+import { ref } from "vue";
 
 defineProps({
-  title: { 
-    type: String, 
-    default: 'Event Management' 
+  title: {
+    type: String,
+    default: "Event Management",
   },
   isDark: {
     type: Boolean,
-    required: true
+    required: true,
+  },
+  notifications: {
+    type: Number,
+    default: 0,
+  },
+});
+
+const emit =defineEmits(["toggleSidebar", "toggleDarkMode", "search"]);
+
+const searchQuery = ref("");
+
+// Trigger search event
+const doSearch = () => {
+  if (searchQuery.value.trim() !== "") {
+
+    emit("search", searchQuery.value);
   }
-} );
-
-
-defineEmits(['toggleSidebar', 'toggleDarkMode']);
+};
 </script>
-
