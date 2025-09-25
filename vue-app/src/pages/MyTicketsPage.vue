@@ -34,7 +34,7 @@
         
         <!-- Action Buttons -->
         <div class="flex items-center gap-3 flex-shrink-0">
-          <button @click="showQrCode(ticket)" class="text-sm bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold">
+          <button @click="showQrCode(ticket)" class="text-sm bg-gray-200 dark:bg-gray-700 dark:text-white px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold">
             Show QR
           </button>
           <button @click="handleDownloadPdf(ticket)" :disabled="isDownloading === ticket.id" class="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-blue-400 font-semibold">

@@ -1,6 +1,6 @@
 <template>
   <div class="p-4 sm:p-6 md:p-8">
-    <h2 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">All Events</h2>
+    <h2 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Our Events</h2>
 
     <!-- Loading State -->
     <div v-if="isLoading" class="text-center text-gray-500 dark:text-gray-400">
@@ -14,13 +14,14 @@
     </div>
 
     <!-- Events Grid -->
-    <div v-else-if="events.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div v-else-if="filteredEvents.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       <EventCard 
-        v-for="event in events" 
-        :key="event.id" 
-        :event="event" 
-        @click="openModal(event)" 
-      />
+  v-for="event in filteredEvents" 
+  :key="event.id" 
+  :event="event" 
+  @click="openModal(event)" 
+/>
+
     </div>
     
     <!-- No Events Found -->
@@ -53,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import EventCard from '../components/EventCard.vue';
 import EventModal from '../components/EventModal.vue';
 import ConfirmationModal from '@/components/ConfirmationModal.vue';
@@ -63,11 +64,12 @@ import { useAuth } from '../composables/useAuth';
 import { useNotifications } from '../composables/useNotifications';
 
 // --- Composables ---
-const { user, isLogged } = useAuth();
+const { isLogged } = useAuth();
 const { showSuccess, showError } = useNotifications();
 
 // --- Component State ---
-const events = ref([]);
+const events = ref([]);             
+const searchQuery = ref('');        
 const isLoading = ref(true);
 const error = ref(null);
 const selectedEvent = ref(null);
@@ -75,21 +77,35 @@ const isModalOpen = ref(false);
 
 // --- Confirmation Modal State ---
 const isConfirmModalOpen = ref(false);
-const confirmModalType = ref('confirm'); // 'confirm', 'success', 'error'
+const confirmModalType = ref('confirm');
 const confirmModalTitle = ref('');
 const confirmModalMessage = ref('');
 const confirmModalActionText = ref('Confirm');
 const confirmModalShowCancel = ref(true);
 const pendingOrderPayload = ref(null);
 
-// --- Fetch events from backend ---
+
+// async function fetchEvents() {
+//   isLoading.value = true;
+//   error.value = null;
+//   try {
+//     const res = await getEvents();
+//     events.value = res.data.data;
+//   } catch (err) {
+//     error.value = 'Failed to load events. Please try again later.';
+//     console.error(err);
+//   } finally {
+//     isLoading.value = false;
+//   }
+// }
+
 async function fetchEvents() {
   isLoading.value = true;
   error.value = null;
   try {
     const res = await getEvents();
-    // Assign the correct data array from paginated response
-    events.value = res.data.data;
+    //  keep only approved events
+    events.value = res.data.data.filter(ev => ev.status === 'approved');
   } catch (err) {
     error.value = 'Failed to load events. Please try again later.';
     console.error(err);
@@ -97,6 +113,27 @@ async function fetchEvents() {
     isLoading.value = false;
   }
 }
+
+
+const props = defineProps({
+  searchQuery: { type: String, default: '' }  
+});
+
+
+const filteredEvents = computed(() => {
+  if (!props.searchQuery) return events.value;
+  return events.value.filter(ev =>
+    ev.title.toLowerCase().includes(props.searchQuery.toLowerCase())
+  );
+});
+
+
+
+
+function handleSearch(query) {
+  searchQuery.value = query;
+}
+
 
 // --- Modal Handling ---
 function openModal(event) {
@@ -134,10 +171,6 @@ async function executeOrder() {
   if (!pendingOrderPayload.value) return;
 
   try {
-    console.log("Order payload:", pendingOrderPayload.value);
-    console.log(JSON.stringify(pendingOrderPayload.value, null, 2));
-
-
     await createOrder(selectedEvent.value.id, pendingOrderPayload.value);
     showSuccess('Purchase successful! Your tickets are now confirmed.');
   } catch (err) {

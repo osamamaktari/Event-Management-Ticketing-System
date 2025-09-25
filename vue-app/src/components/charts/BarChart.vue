@@ -36,6 +36,7 @@ defineProps({
   }
 });
 
+
 // Define the chart's configuration options
 const chartOptions = {
   // This makes the chart fill its container.

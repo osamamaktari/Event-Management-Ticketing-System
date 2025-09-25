@@ -3,7 +3,7 @@
     <!-- Page Header -->
     <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
       <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Manage Events</h2>
-      <button @click="openEventModal()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 font-semibold shadow">
+      <button @click="openEventModal()" class="bg-indigo-600 text-white px-2 py-1.5 rounded-lg hover:bg-indigo-700 font-semibold shadow">
         + Create New Event
       </button>
     </div>
@@ -13,24 +13,43 @@
     <div v-else-if="error" class="text-center text-red-500 bg-red-100 p-4 rounded-lg">{{ error }}</div>
 
     <!-- Events List -->
-    <div v-else-if="organizerEvents.length" class="space-y-4">
-      <div v-for="event in organizerEvents" :key="event.id" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div v-else-if="events.length" class="space-y-4">
+      <div v-for="event in events" :key="event.id" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="flex-grow">
           <h3 class="font-bold text-lg text-gray-900 dark:text-white">{{ event.title }}</h3>
+                 <!-- Status Change Dropdown & Button (Admin only) -->
+<div v-if="currentUser?.role === 'admin'" class="flex items-center gap-2 m-2">
+  <select v-model="event.newStatus" class=" rounded  text-white text-md bg-indigo-700">
+    <option value="approved">Approved</option>
+    <option value="pending">Pending</option>
+    <option value="rejected">Rejected</option>
+    <option value="cancelled">Cancelled</option>
+  </select>
+  <button 
+    @click="changeStatus(event)"
+    class="text-sm bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-1 py-1 rounded-md font-semibold"
+  >
+    Update Status
+  </button>
+</div>
           <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
             <span>{{ new Date(event.start_date).toLocaleDateString() }}</span>
             <span class="text-gray-300 dark:text-gray-600">•</span>
             <span :class="statusBadgeClass(event.status)" class="text-xs font-medium px-2.5 py-0.5 rounded-full">
               {{ event.status }}
             </span>
+
+
+
+
           </div>
         </div>
         <!-- Action Buttons -->
         <div class="flex items-center gap-2 flex-shrink-0 flex-wrap">
-          <button @click="openAttendeesModal(event)" class="text-sm bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-md font-semibold">View Attendees</button>
-          <button @click="openTicketTypesModal(event)" class="text-sm bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-md font-semibold">Manage Tickets</button>
-          <button @click="openEventModal(event)" class="text-sm bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-md font-semibold">Edit</button>
-          <button @click="confirmDeleteEvent(event)" class="text-sm bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-3 py-2 rounded-md font-semibold">Delete</button>
+          <button @click="openAttendeesModal(event)" class="text-sm bg-gray-200 dark:bg-gray-700 px-2 py-1.5 dark:text-white rounded-md font-semibold">View Attendees</button>
+          <button @click="openTicketTypesModal(event)" class="text-sm bg-gray-200 dark:bg-gray-700 px-2 py-1.5 dark:text-white rounded-md font-semibold">Manage Tickets</button>
+          <button @click="openEventModal(event)" class="text-sm bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1.5 rounded-md font-semibold">Edit</button>
+          <button @click="confirmDeleteEvent(event)" class="text-sm bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-2 py-1.5 rounded-md font-semibold">Delete</button>
         </div>
       </div>
     </div>
@@ -42,7 +61,6 @@
     </div>
 
     <!-- Modals Section -->
-    <!-- Only show modal if selectedEvent exists to prevent prop type errors -->
     <EventFormModal 
       :isOpen="isEventModalOpen" 
       :event="selectedEvent || {}" 
@@ -55,8 +73,8 @@
       :event="selectedEvent" 
       @close="closeTicketTypesModal" 
     />
-    <AttendeesModal 
-      v-if="selectedEvent"
+   <AttendeesModal 
+      v-if="isAttendeesModalOpen"
       :isOpen="isAttendeesModalOpen" 
       :event="selectedEvent" 
       @close="closeAttendeesModal" 
@@ -82,12 +100,16 @@ import AttendeesModal from '../components/AttendeesModal.vue';
 import ConfirmationModal from '../components/ConfirmationModal.vue';
 import { useNotifications } from '../composables/useNotifications.js';
 import { getOrganizerEvents, createEvent, updateEvent, deleteEvent } from '../services/eventsService.js';
+import api from '../services/api.js';
 
 // Initialize toast notifications
 const { showSuccess, showError } = useNotifications();
+// to select the user 
+const currentUser = ref(JSON.parse(localStorage.getItem('user')) || null);
+
 
 // Component state
-const organizerEvents = ref([]);
+const events = ref([]); // Stores all events visible to current user
 const isLoading = ref(true);
 const error = ref(null);
 
@@ -99,13 +121,52 @@ const isConfirmModalOpen = ref(false);
 const selectedEvent = ref(null);
 const eventToHandle = ref(null);
 
-// Fetch organizer events from API
+// Fetch events from API based on user role
+// async function fetchOrganizerEvents() {
+//   isLoading.value = true;
+//   error.value = null;
+
+//   try {
+//     const res = await getOrganizerEvents();
+
+//     // Get current user from localStorage or store
+//     const currentUser = JSON.parse(localStorage.getItem('user'));
+
+//     // Admin sees all events, organizer sees only their own
+//     if (currentUser.role === 'admin') {
+//       events.value = res.data.data || [];
+//     } else {
+//       events.value = (res.data.data || []).filter(
+//         event => event.organizer_id === currentUser.id
+//       );
+//     }
+
+//   } catch (err) {
+//     console.error(err);
+//     error.value = err.response?.data?.message || 'Failed to load your events.';
+//   } finally {
+//     isLoading.value = false;
+//   }
+// }
 async function fetchOrganizerEvents() {
   isLoading.value = true;
   error.value = null;
+
   try {
     const res = await getOrganizerEvents();
-    organizerEvents.value = res.data.data || [];
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+
+    // Filter events based on role
+    let loadedEvents = currentUser.role === 'admin'
+      ? res.data.data || []
+      : (res.data.data || []).filter(event => event.organizer_id === currentUser.id);
+
+    // Add `newStatus` property to each event for admin dropdown
+    events.value = loadedEvents.map(ev => ({
+      ...ev,
+      newStatus: ev.status 
+    }));
+
   } catch (err) {
     console.error(err);
     error.value = err.response?.data?.message || 'Failed to load your events.';
@@ -113,6 +174,7 @@ async function fetchOrganizerEvents() {
     isLoading.value = false;
   }
 }
+
 
 // Modal control functions
 function openEventModal(event = null) {
@@ -170,7 +232,7 @@ async function handleDeleteEvent() {
   }
 }
 
-// Helper function for status badge
+// Helper function for status badge styles
 function statusBadgeClass(status) {
   const styles = {
     pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
@@ -181,7 +243,28 @@ function statusBadgeClass(status) {
   return styles[status] || styles.cancelled;
 }
 
-// Lifecycle hook
+// change status
+async function changeStatus(event) {
+  if (!event.newStatus) return;
+
+  try {
+    const res = await api.post(`/admin/events/${event.id}/status`, 
+      { status: event.newStatus }, 
+      { withCredentials: true }
+    );
+
+
+    const index = events.value.findIndex(e => e.id === event.id);
+    if (index !== -1) events.value[index].status = res.data.status;
+
+    showSuccess(`Event "${event.title}" status updated to "${res.data.status}".`);
+  } catch (err) {
+    console.error(err);
+    showError(err.response?.data?.message || 'Failed to update status.');
+  }
+}
+
+// Lifecycle hook to fetch events on component mount
 onMounted(() => {
   fetchOrganizerEvents();
 });

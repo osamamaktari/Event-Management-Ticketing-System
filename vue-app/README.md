@@ -1,29 +1,66 @@
-# vue-app
+# Event Ticketing Frontend Documentation
 
-This template should help get you started developing with Vue 3 in Vite.
+## Overview
 
-## Recommended IDE Setup
+The **Event Ticketing Frontend** is a modern, responsive, and interactive application built using **Vue 3** with **Composition API**, **Tailwind CSS**, and **Axios** for API communication.  
+It communicates with a **Laravel backend** that handles authentication, ticket management, PDF generation, and QR codes.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+The application supports:
 
-## Customize configuration
+- Browsing events
+- Viewing event details
+- Booking tickets
+- Managing ticket types (for organizers)
+- Downloading tickets as PDF
+- QR code generation for tickets
+- Validating tickets
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+> ⚠️ Note: This frontend is decoupled from the backend, meaning the backend serves only the API and PDF files. The frontend handles all rendering and UI.
 
-## Project Setup
+---
 
-```sh
+## Table of Contents
+
+1. [Requirements](#requirements)
+2. [Installation](#installation)
+3. [Environment Variables](#environment-variables)
+4. [Project Structure](#project-structure)
+5. [Routing](#routing)
+6. [Services (API)](#services-api)
+7. [Components](#components)
+8. [Pages](#pages)
+9. [Notifications System](#notifications-system)
+10. [PDF Download & QR Code](#pdf-download--qr-code)
+11. [Styling](#styling)
+12. [Development Workflow](#development-workflow)
+13. [Contributing](#contributing)
+14. [License](#license)
+
+---
+
+## Requirements
+
+- Node.js >= 18
+- npm >= 9 or yarn >= 3
+- Access to backend Laravel API
+- Optional: VS Code with Vue tooling
+
+---
+
+## Installation
+
+```bash
+# Clone the repository
+git clone <repo-url>
+cd frontend
+
+# Install dependencies
 npm install
-```
+# or
+yarn install
 
-### Compile and Hot-Reload for Development
-
-```sh
+# Run development server
 npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
+# or
+yarn dev
 ```

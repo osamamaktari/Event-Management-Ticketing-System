@@ -27,3 +27,7 @@ export const updateTicketType = (id, payload) =>
 
 export const deleteTicketType = (id) => 
   api.delete(`/organizer/ticket-types/${id}`, { withCredentials: true });
+
+export function getEventTickets(eventId) {
+  return api.get(`/events/${eventId}/tickets`);
+}

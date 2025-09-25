@@ -1,6 +1,14 @@
 <template>
   <div class="p-4 sm:p-6 md:p-8 max-w-4xl mx-auto">
-    <h2 class="text-3xl font-bold mb-8 text-gray-900 dark:text-white">My Profile</h2>
+    <div class="flex justify-between items-center mb-8">
+      <h2 class="text-3xl font-bold text-gray-900 dark:text-white">My Profile</h2>
+      <!-- Logout Button -->
+      <button 
+        @click="logoutUser" 
+        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-semibold">
+        Logout
+      </button>
+    </div>
 
     <div class="space-y-8">
       <!-- 1. Personal Information Card -->
@@ -55,39 +63,36 @@
             <p class="font-medium text-gray-800 dark:text-gray-200">Email Notifications</p>
             <p class="text-sm text-gray-500 dark:text-gray-400">Receive emails about your tickets and event updates.</p>
           </div>
-          <button @click="toggleNotifications" :class="notificationSettings.email ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors">
+          <button 
+            @click="toggleNotifications" 
+            :class="notificationSettings.email ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'" 
+            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors">
             <span :class="notificationSettings.email ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
           </button>
         </div>
       </div>
     </div>
-
-    <!-- The Notification Modal has been removed from here -->
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-// 1. Import the necessary composables
+import api from '../services/api';
 import { useAuth } from '../composables/useAuth';
-import { useNotifications } from '../composables/useNotifications.js';
+import { useNotifications } from '../composables/useNotifications';
+import { useRouter } from 'vue-router';
 
-// 2. Initialize the composables
-const { user } = useAuth();
+// --- Composables ---
+const { user, fetchUser, logout } = useAuth();
 const { showSuccess, showError, showInfo } = useNotifications();
+const router = useRouter();
 
-// --- Component State ---
+// --- Local state for forms ---
 const profileForm = ref({ name: '', email: '', phone: '' });
 const passwordForm = ref({ current_password: '', new_password: '', new_password_confirmation: '' });
 const notificationSettings = ref({ email: true });
 
-// 3. Remove the state variables for the old notification modal
-// const isNotifyOpen = ref(false);
-// const notifyType = ref('success');
-// const notifyTitle = ref('');
-// const notifyMessage = ref('');
-
-// --- Populate form with user data when component is mounted ---
+// --- Fill profile form with user data ---
 onMounted(() => {
   if (user.value) {
     profileForm.value.name = user.value.name;
@@ -96,33 +101,52 @@ onMounted(() => {
   }
 });
 
-// --- Form Submission Handlers (Simulated) ---
+// --- Update profile ---
 async function updateProfile() {
-  console.log('Updating profile with:', profileForm.value);
-  
-  // 4. Use the toast notification
-  showSuccess('(Simulation) Your personal information has been updated successfully.');
-}
-
-async function changePassword() {
-  if (passwordForm.value.new_password !== passwordForm.value.new_password_confirmation) {
-    // 5. Use the error toast for validation errors
-    showError('The new password and confirmation do not match.');
-    return;
+  try {
+    await api.put('/user/profile', profileForm.value);
+    showSuccess('Your profile has been updated.');
+    await fetchUser(); // refresh user data
+  } catch (err) {
+    showError(err.response?.data?.message || 'Failed to update profile');
   }
-  console.log('Changing password...');
-
-  // 6. Use the success toast
-  showSuccess('(Simulation) Your password has been changed successfully.');
-  
-  passwordForm.value = { current_password: '', new_password: '', new_password_confirmation: '' };
 }
 
+// --- Change password ---
+async function changePassword() {
+  try {
+    await api.put('/user/password', {
+      current_password: passwordForm.value.current_password,
+      new_password: passwordForm.value.new_password,
+      new_password_confirmation: passwordForm.value.new_password_confirmation,
+    });
+    showSuccess('Password updated successfully');
+    passwordForm.value = { current_password: '', new_password: '', new_password_confirmation: '' };
+  } catch (err) {
+    showError(err.response?.data?.message || 'Failed to change password');
+  }
+}
+
+// --- Toggle notification ---
 function toggleNotifications() {
   notificationSettings.value.email = !notificationSettings.value.email;
-  console.log('Email notifications toggled to:', notificationSettings.value.email);
-
-  // 7. Use the info toast for settings changes
   showInfo(`Email notifications have been ${notificationSettings.value.email ? 'enabled' : 'disabled'}.`);
 }
+
+
+async function logoutUser() {
+  try {
+    await logout(); 
+    showSuccess('You have been logged out successfully.');
+
+    
+    setTimeout(() => {
+      router.replace('/auth'); 
+    }, 1000);
+
+  } catch (err) {
+    showError(err.message || 'Failed to log out. Please try again.');
+  }
+}
 </script>
+

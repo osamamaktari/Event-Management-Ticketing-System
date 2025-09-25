@@ -83,11 +83,6 @@
             </button>
           </form>
         </div>
-
-        <!-- Error Message Display -->
-        <div v-if="error" class="mt-4 text-center text-red-500 bg-red-100 dark:bg-red-900/50 p-3 rounded-lg">
-          {{ error }}
-        </div>
       </div>
     </div>
   </div>
@@ -97,14 +92,15 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
+import { useNotifications } from '../composables/useNotifications'; // composable for notifications
 
 const router = useRouter();
 const { login, register } = useAuth();
+const { showSuccess, showError } = useNotifications(); // success & error notification helpers
 
 // --- Component State ---
-const activeTab = ref('login'); // 'login' or 'register'
+const activeTab = ref('login'); // active tab (login/register)
 const isLoading = ref(false);
-const error = ref(null);
 
 // --- Form Data ---
 const loginForm = ref({
@@ -116,18 +112,18 @@ const registerForm = ref({
   name: '',
   email: '',
   password: '',
-  role: 'attendee' // Default role
+  role: 'attendee' // default role
 });
 
 // --- Form Submission Handlers ---
 async function handleLogin() {
   isLoading.value = true;
-  error.value = null;
   try {
     await login(loginForm.value.email, loginForm.value.password);
-    router.push('/'); // Redirect after login
+    showSuccess('Login successful! Welcome back ');
+    router.push('/'); // redirect after login
   } catch (err) {
-    error.value = err.response?.data?.message || 'Login failed. Please check your credentials.';
+    showError(err.response?.data?.message || 'Login failed. Please check your credentials.');
   } finally {
     isLoading.value = false;
   }
@@ -135,12 +131,12 @@ async function handleLogin() {
 
 async function handleRegister() {
   isLoading.value = true;
-  error.value = null;
   try {
     await register(registerForm.value);
-    router.push('/'); // Redirect after registration
+    showSuccess('Account created successfully ');
+    router.push('/'); // redirect after registration
   } catch (err) {
-    error.value = err.response?.data?.message || 'Registration failed. Please try again.';
+    showError(err.response?.data?.message || 'Registration failed. Please try again.');
   } finally {
     isLoading.value = false;
   }
