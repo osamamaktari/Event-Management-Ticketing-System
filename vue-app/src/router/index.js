@@ -14,39 +14,46 @@ const routes = [
     path: '/',
     name: 'Events',
     component: EventsPage,
-    meta: { title: 'All Events' }
-  },
-  {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: DashboardPage,
-    meta: { title: 'Dashboard' }
-  },
-  {
-    path: '/event-management',
-    name: 'EventManagement',
-    component: EventManagementPage,
-    meta: { title: 'Event Management' }
+    // layout: 'public' -> يعرض الصفحة كاملة الشاشة مع الهيدر المدمج بدون سايد بار
+    meta: { title: 'All Events', layout: 'public' }
   },
   {
     path: '/my-tickets',
     name: 'MyTickets',
     component: MyTicketsPage,
-    meta: { title: 'My Tickets' }
+    // 💡 تم التعديل هنا: أصبحت تفتح خارج نطاق لوحة التحكم للـ Attendee
+    meta: { title: 'My Tickets', layout: 'public' }
   },
   {
     path: '/profile',
     name: 'Profile',
     component: ProfilePage,
-    meta: { title: 'Profile' }
+    // 💡 تم التعديل هنا: أصبحت تفتح خارج نطاق لوحة التحكم للـ Attendee
+    meta: { title: 'Profile', layout: 'public' }
   },
   {
     path: '/auth',
     name: 'Auth',
     component: AuthPage,
-    meta: { title: 'Login / Register' }
+    meta: { title: 'Login / Register', layout: 'public' }
   },
-  // Redirect unknown routes to Events page
+
+  // --- 🛠️ مسارات لوحة التحكم الإدارية للمنظمين (Dashboard Layout) ---
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: DashboardPage,
+    // layout: 'dashboard' -> سيتعرف عليه App.vue ويقوم بإظهار السايد بار والهيدر الجانبي تلقائياً
+    meta: { title: 'Dashboard', layout: 'dashboard' }
+  },
+  {
+    path: '/event-management',
+    name: 'EventManagement',
+    component: EventManagementPage,
+    meta: { title: 'Event Management', layout: 'dashboard' }
+  },
+
+  // إعادة توجيه أي مسار عشوائي غير معروف إلى الصفحة الرئيسية
   {
     path: '/:pathMatch(.*)*',
     redirect: '/'

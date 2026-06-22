@@ -1,78 +1,115 @@
 <template>
-  <div class="p-4 sm:p-6 md:p-8 max-w-4xl mx-auto">
-    <h2 class="text-3xl font-bold mb-8 text-gray-900 dark:text-white">My Profile</h2>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    
+    <header class="h-20 bg-indigo-600 dark:bg-gray-800 text-white p-4 flex justify-between items-center shadow-md sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto w-full flex justify-between items-center">
+        <router-link to="/" class="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <TicketIcon class="w-8 h-8 text-white" />
+          <h1 class="text-2xl font-bold tracking-wider">Eventify</h1>
+        </router-link>
 
-    <div class="space-y-8">
-      <!-- 1. Personal Information Card -->
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-        <h3 class="text-xl font-semibold border-b dark:border-gray-700 pb-3 mb-4 text-gray-900 dark:text-white">Personal Information</h3>
-        <form @submit.prevent="updateProfile" class="space-y-4">
-          <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
-            <input type="text" v-model="profileForm.name" id="name" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
-          </div>
-          <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
-            <input type="email" v-model="profileForm.email" id="email" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
-          </div>
-          <div>
-            <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number (Optional)</label>
-            <input type="tel" v-model="profileForm.phone" id="phone" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
-          </div>
-          <div class="text-right">
-            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold">Save Changes</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- 2. Change Password Card -->
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-        <h3 class="text-xl font-semibold border-b dark:border-gray-700 pb-3 mb-4 text-gray-900 dark:text-white">Change Password</h3>
-        <form @submit.prevent="changePassword" class="space-y-4">
-          <div>
-            <label for="current_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Password</label>
-            <input type="password" v-model="passwordForm.current_password" id="current_password" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
-          </div>
-          <div>
-            <label for="new_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
-            <input type="password" v-model="passwordForm.new_password" id="new_password" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
-          </div>
-          <div>
-            <label for="new_password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm New Password</label>
-            <input type="password" v-model="passwordForm.new_password_confirmation" id="new_password_confirmation" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
-          </div>
-          <div class="text-right">
-            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold">Update Password</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- 3. Notification Settings Card -->
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-        <h3 class="text-xl font-semibold border-b dark:border-gray-700 pb-3 mb-4 text-gray-900 dark:text-white">Notification Settings</h3>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="font-medium text-gray-800 dark:text-gray-200">Email Notifications</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Receive emails about your tickets and event updates.</p>
-          </div>
-          <button @click="toggleNotifications" :class="notificationSettings.email ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors">
-            <span :class="notificationSettings.email ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
+        <div class="flex items-center gap-6">
+          <router-link to="/" class="text-sm font-medium hover:text-indigo-200 transition-colors">
+            Explore Events
+          </router-link>
+          <router-link to="/my-tickets" class="text-sm font-medium hover:text-indigo-200 transition-colors">
+            My Tickets
+          </router-link>
+          
+          <button @click="$emit('toggleDarkMode')" class="p-2 rounded-full hover:bg-white/20 dark:hover:bg-gray-700 focus:outline-none transition-colors">
+            <span v-if="isDark">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            </span>
+            <span v-else>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </span>
           </button>
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- The Notification Modal has been removed from here -->
+    <main class="max-w-4xl mx-auto p-4 sm:p-6 md:p-8">
+      <div class="mb-8 border-b dark:border-gray-800 pb-4">
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">My Profile</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Update your personal account information and security settings.</p>
+      </div>
+
+      <div class="space-y-8">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 class="text-xl font-semibold border-b dark:border-gray-700 pb-3 mb-4 text-gray-900 dark:text-white">Personal Information</h3>
+          <form @submit.prevent="updateProfile" class="space-y-4">
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+              <input type="text" v-model="profileForm.name" id="name" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            </div>
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+              <input type="email" v-model="profileForm.email" id="email" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            </div>
+            <div>
+              <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number (Optional)</label>
+              <input type="tel" v-model="profileForm.phone" id="phone" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            </div>
+            <div class="text-right">
+              <button type="submit" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 font-semibold transition-colors shadow-sm">Save Changes</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 class="text-xl font-semibold border-b dark:border-gray-700 pb-3 mb-4 text-gray-900 dark:text-white">Change Password</h3>
+          <form @submit.prevent="changePassword" class="space-y-4">
+            <div>
+              <label for="current_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Password</label>
+              <input type="password" v-model="passwordForm.current_password" id="current_password" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            </div>
+            <div>
+              <label for="new_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
+              <input type="password" v-model="passwordForm.new_password" id="new_password" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            </div>
+            <div>
+              <label for="new_password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm New Password</label>
+              <input type="password" v-model="passwordForm.new_password_confirmation" id="new_password_confirmation" class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            </div>
+            <div class="text-right">
+              <button type="submit" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 font-semibold transition-colors shadow-sm">Update Password</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 class="text-xl font-semibold border-b dark:border-gray-700 pb-3 mb-4 text-gray-900 dark:text-white">Notification Settings</h3>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium text-gray-800 dark:text-gray-200">Email Notifications</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Receive emails about your tickets and event updates.</p>
+            </div>
+            <button @click="toggleNotifications" :class="notificationSettings.email ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer outline-none">
+              <span :class="notificationSettings.email ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-// 1. Import the necessary composables
+import { TicketIcon } from '@heroicons/vue/24/outline';
 import { useAuth } from '../composables/useAuth';
 import { useNotifications } from '../composables/useNotifications.js';
 
-// 2. Initialize the composables
+// استقبال بروبس الدارك مود والاميتس للتوافق الكامل
+defineProps({
+  isDark: {
+    type: Boolean,
+    required: true
+  }
+});
+defineEmits(['toggleDarkMode']);
+
+// --- Initialize the composables ---
 const { user } = useAuth();
 const { showSuccess, showError, showInfo } = useNotifications();
 
@@ -80,12 +117,6 @@ const { showSuccess, showError, showInfo } = useNotifications();
 const profileForm = ref({ name: '', email: '', phone: '' });
 const passwordForm = ref({ current_password: '', new_password: '', new_password_confirmation: '' });
 const notificationSettings = ref({ email: true });
-
-// 3. Remove the state variables for the old notification modal
-// const isNotifyOpen = ref(false);
-// const notifyType = ref('success');
-// const notifyTitle = ref('');
-// const notifyMessage = ref('');
 
 // --- Populate form with user data when component is mounted ---
 onMounted(() => {
@@ -99,30 +130,22 @@ onMounted(() => {
 // --- Form Submission Handlers (Simulated) ---
 async function updateProfile() {
   console.log('Updating profile with:', profileForm.value);
-  
-  // 4. Use the toast notification
-  showSuccess('(Simulation) Your personal information has been updated successfully.');
+  showSuccess('Your personal information has been updated successfully.');
 }
 
 async function changePassword() {
   if (passwordForm.value.new_password !== passwordForm.value.new_password_confirmation) {
-    // 5. Use the error toast for validation errors
     showError('The new password and confirmation do not match.');
     return;
   }
   console.log('Changing password...');
-
-  // 6. Use the success toast
-  showSuccess('(Simulation) Your password has been changed successfully.');
-  
+  showSuccess('Your password has been changed successfully.');
   passwordForm.value = { current_password: '', new_password: '', new_password_confirmation: '' };
 }
 
 function toggleNotifications() {
   notificationSettings.value.email = !notificationSettings.value.email;
   console.log('Email notifications toggled to:', notificationSettings.value.email);
-
-  // 7. Use the info toast for settings changes
   showInfo(`Email notifications have been ${notificationSettings.value.email ? 'enabled' : 'disabled'}.`);
 }
 </script>

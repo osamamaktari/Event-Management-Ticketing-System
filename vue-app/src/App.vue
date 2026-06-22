@@ -1,25 +1,26 @@
 <template>
+  <div :class="{ 'dark': isDark }">
+    <div v-if="$route.meta.layout === 'dashboard'" class="flex min-h-screen bg-gray-100 dark:bg-gray-900">
+      
+      <AppSidebar :show="sidebarOpen" @close="sidebarOpen = false" />
 
-  <div class="flex min-h-screen bg-gray-100 dark:bg-gray-900">
+      <div class="flex-1 flex flex-col">
+        <AppHeader 
+          :is-dark="isDark"
+          @toggleSidebar="sidebarOpen = !sidebarOpen"
+          @toggle-dark-mode="toggleDark" 
+        />
 
-    <AppSidebar :show="sidebarOpen" @close="sidebarOpen=false" />
+        <main class="flex-1 p-4 md:ml-0">
+          <router-view :isDark="isDark" @toggleDarkMode="toggleDark" />
+        </main>
 
-    <div class="flex-1 flex flex-col">
-  
-      <AppHeader 
-    
-        :is-dark="isDark"
-        @toggleSidebar="sidebarOpen = !sidebarOpen"
-        @toggle-dark-mode="toggleDark" 
-      />
+        <AppFooter />
+      </div>
+    </div>
 
-      <!-- Main content -->
-      <main class="flex-1 p-4 md:ml-0">
-        <router-view />
-      </main>
-
-      <!-- Footer -->
-      <AppFooter />
+    <div v-else class="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <router-view :isDark="isDark" @toggleDarkMode="toggleDark" />
     </div>
   </div>
 </template>
@@ -36,7 +37,6 @@ import AppFooter from './components/AppFooter.vue';
 const sidebarOpen = ref(false);
 const route = useRoute();
 const pageTitle = ref(route.meta.title || 'Event Management');
-
 
 const isDark = useDark();
 const toggleDark = useToggle(isDark);

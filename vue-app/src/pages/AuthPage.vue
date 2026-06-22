@@ -116,6 +116,7 @@ const registerForm = ref({
   name: '',
   email: '',
   password: '',
+   password_confirmation: '', 
   role: 'attendee' // Default role
 });
 

@@ -1,18 +1,17 @@
 <template>
   <div class="p-4 sm:p-6 md:p-8">
-    <!-- Page Header -->
     <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-      <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Manage Events</h2>
-      <button @click="openEventModal()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 font-semibold shadow">
+      <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+        {{ isAdmin() ? 'Manage All Events (Admin)' : 'Manage Events' }}
+      </h2>
+      <button v-if="!isAdmin()" @click="openEventModal()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 font-semibold shadow">
         + Create New Event
       </button>
     </div>
 
-    <!-- Loading and Error States -->
-    <div v-if="isLoading" class="text-center text-gray-500 py-10">Loading your events...</div>
+    <div v-if="isLoading" class="text-center text-gray-500 py-10">Loading events...</div>
     <div v-else-if="error" class="text-center text-red-500 bg-red-100 p-4 rounded-lg">{{ error }}</div>
 
-    <!-- Events List -->
     <div v-else-if="organizerEvents.length" class="space-y-4">
       <div v-for="event in organizerEvents" :key="event.id" class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="flex-grow">
@@ -25,8 +24,30 @@
             </span>
           </div>
         </div>
-        <!-- Action Buttons -->
+        
         <div class="flex items-center gap-2 flex-shrink-0 flex-wrap">
+          
+          <template v-if="isAdmin()">
+            <button 
+              v-if="event.status !== 'approved'" 
+              @click="handleUpdateStatus(event.id, 'approved')" 
+              class="text-sm bg-green-600 text-white px-3 py-2 rounded-md font-semibold hover:bg-green-700 transition">
+             Approve
+            </button>
+            <button 
+              v-if="event.status !== 'rejected'" 
+              @click="handleUpdateStatus(event.id, 'rejected')" 
+              class="text-sm bg-red-600 text-white px-3 py-2 rounded-md font-semibold hover:bg-red-700 transition">
+             Reject
+            </button>
+            <button 
+              v-if="event.status !== 'pending'" 
+              @click="handleUpdateStatus(event.id, 'pending')" 
+              class="text-sm bg-yellow-500 text-white px-3 py-2 rounded-md font-semibold hover:bg-yellow-600 transition">
+             Pend
+            </button>
+          </template>
+
           <button @click="openAttendeesModal(event)" class="text-sm bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-md font-semibold">View Attendees</button>
           <button @click="openTicketTypesModal(event)" class="text-sm bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-md font-semibold">Manage Tickets</button>
           <button @click="openEventModal(event)" class="text-sm bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-md font-semibold">Edit</button>
@@ -35,14 +56,11 @@
       </div>
     </div>
 
-    <!-- Empty State -->
     <div v-else class="text-center text-gray-500 border-2 border-dashed p-12 rounded-lg">
-      <p class="text-xl font-semibold">You haven't created any events yet.</p>
-      <p>Click the button above to get started.</p>
+      <p class="text-xl font-semibold">No events found.</p>
+      <p v-if="!isAdmin()">Click the button above to get started.</p>
     </div>
 
-    <!-- Modals Section -->
-    <!-- Only show modal if selectedEvent exists to prevent prop type errors -->
     <EventFormModal 
       :isOpen="isEventModalOpen" 
       :event="selectedEvent || {}" 
@@ -62,7 +80,6 @@
       @close="closeAttendeesModal" 
     />
 
-    <!-- Deletion Confirmation Modal -->
     <ConfirmationModal
       :isOpen="isConfirmModalOpen"
       type="confirm"
@@ -81,10 +98,21 @@ import TicketTypesModal from '../components/TicketTypesModal.vue';
 import AttendeesModal from '../components/AttendeesModal.vue';
 import ConfirmationModal from '../components/ConfirmationModal.vue';
 import { useNotifications } from '../composables/useNotifications.js';
-import { getOrganizerEvents, createEvent, updateEvent, deleteEvent } from '../services/eventsService.js';
+
+// استيراد الصلاحيات والدوال الجديدة من ملف الخدمات
+import { useAuth } from '../composables/useAuth.js';
+import { 
+  getOrganizerEvents, 
+  getAdminEvents, 
+  updateEventStatus, 
+  createEvent, 
+  updateEvent, 
+  deleteEvent 
+} from '../services/eventsService.js';
 
 // Initialize toast notifications
 const { showSuccess, showError } = useNotifications();
+const { isAdmin } = useAuth();
 
 // Component state
 const organizerEvents = ref([]);
@@ -99,18 +127,30 @@ const isConfirmModalOpen = ref(false);
 const selectedEvent = ref(null);
 const eventToHandle = ref(null);
 
-// Fetch organizer events from API
+// Fetch events from API (Checks role dynamically)
 async function fetchOrganizerEvents() {
   isLoading.value = true;
   error.value = null;
   try {
-    const res = await getOrganizerEvents();
+    const res = isAdmin() ? await getAdminEvents() : await getOrganizerEvents();
     organizerEvents.value = res.data.data || [];
   } catch (err) {
     console.error(err);
-    error.value = err.response?.data?.message || 'Failed to load your events.';
+    error.value = err.response?.data?.message || 'Failed to load events.';
   } finally {
     isLoading.value = false;
+  }
+}
+
+// Admin function to handle event status changes
+async function handleUpdateStatus(eventId, status) {
+  try {
+    await updateEventStatus(eventId, status);
+    showSuccess(`Event status successfully updated to [${status}].`);
+    await fetchOrganizerEvents();
+  } catch (err) {
+    console.error(err);
+    showError(err.response?.data?.message || 'Failed to update event status.');
   }
 }
 
@@ -166,7 +206,7 @@ async function handleDeleteEvent() {
     console.error(err);
     showError(err.response?.data?.message || 'Failed to delete event.');
   } finally {
-    isConfirmModalOpen.value = false;
+    isConfirmModalOpen = false;
   }
 }
 
