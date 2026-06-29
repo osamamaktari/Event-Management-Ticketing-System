@@ -100,7 +100,6 @@ import { TicketIcon } from '@heroicons/vue/24/outline';
 import { useAuth } from '../composables/useAuth';
 import { useNotifications } from '../composables/useNotifications.js';
 
-// استقبال بروبس الدارك مود والاميتس للتوافق الكامل
 defineProps({
   isDark: {
     type: Boolean,
@@ -109,16 +108,15 @@ defineProps({
 });
 defineEmits(['toggleDarkMode']);
 
-// --- Initialize the composables ---
-const { user } = useAuth();
+// --- استخراج الدوال الحقيقية من الـ Composable ---
+const { user, updateProfileApi, updatePasswordApi } = useAuth();
 const { showSuccess, showError, showInfo } = useNotifications();
 
-// --- Component State ---
 const profileForm = ref({ name: '', email: '', phone: '' });
+// لارافيل يتوقع حقل التاكيد باسم password_confirmation بناءً على كود الباكيند لديك (confirmed)
 const passwordForm = ref({ current_password: '', new_password: '', new_password_confirmation: '' });
 const notificationSettings = ref({ email: true });
 
-// --- Populate form with user data when component is mounted ---
 onMounted(() => {
   if (user.value) {
     profileForm.value.name = user.value.name;
@@ -127,20 +125,46 @@ onMounted(() => {
   }
 });
 
-// --- Form Submission Handlers (Simulated) ---
+// 🌟 دالة التحديث الحقيقية للبيانات الشخصية
 async function updateProfile() {
-  console.log('Updating profile with:', profileForm.value);
-  showSuccess('Your personal information has been updated successfully.');
+  try {
+    await updateProfileApi({
+      name: profileForm.value.name,
+      email: profileForm.value.email,
+      phone: profileForm.value.phone
+    });
+    showSuccess('Your personal information has been updated successfully.');
+  } catch (err) {
+    console.error(err);
+    // اقتناص أخطاء الـ Validation من لارافيل وعرضها
+    const errorMessage = err.response?.data?.message || 'Failed to update profile.';
+    showError(errorMessage);
+  }
 }
 
+// 🌟 دالة التحديث الحقيقية لكمة المرور
 async function changePassword() {
   if (passwordForm.value.new_password !== passwordForm.value.new_password_confirmation) {
     showError('The new password and confirmation do not match.');
     return;
   }
-  console.log('Changing password...');
-  showSuccess('Your password has been changed successfully.');
-  passwordForm.value = { current_password: '', new_password: '', new_password_confirmation: '' };
+  
+  try {
+    // نرسل المسميات بالشكل الذي يتوقعه لارافيل بالباكيند: new_password و new_password_confirmation
+    await updatePasswordApi({
+      current_password: passwordForm.value.current_password,
+      new_password: passwordForm.value.new_password,
+      new_password_confirmation: passwordForm.value.new_password_confirmation
+    });
+    
+    showSuccess('Your password has been changed successfully.');
+    // تصفير الحقول بعد النجاح
+    passwordForm.value = { current_password: '', new_password: '', new_password_confirmation: '' };
+  } catch (err) {
+    console.error(err);
+    const errorMessage = err.response?.data?.message || 'Failed to update password.';
+    showError(errorMessage);
+  }
 }
 
 function toggleNotifications() {

@@ -48,7 +48,7 @@ export function useAuth() {
   }
 
   async function logout() {
-    try { await api.post('/logout'); } catch (e) {}
+    try { await api.post('/logout'); } catch (e) { }
     user.value = null;
     token.value = null;
     setAuthToken(null);
@@ -56,5 +56,24 @@ export function useAuth() {
     localStorage.removeItem('token');
   }
 
-  return { user, token, isLogged, isAdmin, isOrganizer, isAttendee, login, register, logout, csrf };
+  // 🌟 دالة تحديث بيانات البروفايل الحقيقية
+  async function updateProfileApi(payload) {
+    const res = await api.put('/user/profile', payload);
+    // تحديث البيانات محلياً بعد نجاح الطلب بالباكيند
+    user.value = res.data.user;
+    localStorage.setItem('user', JSON.stringify(res.data.user));
+    return res;
+  }
+
+  // 🌟 دالة تحديث كلمة المرور الحقيقية
+  async function updatePasswordApi(payload) {
+    return await api.put('/user/password', payload);
+  }
+
+  // ارجاع الدوال الجديدة ليتم استخدامها في الصفحات
+  return {
+    user, token, isLogged, isAdmin, isOrganizer, isAttendee,
+    login, register, logout, csrf, fetchUser,
+    updateProfileApi, updatePasswordApi
+  };
 }
